@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
 import './Questionnaire.css';
+import FileUploadPopup from './FileUploadPopup';
 
 const PatientQuestionnaire = () => {
   const [photos, setPhotos] = useState({});
+  const [activePhotoPopup, setActivePhotoPopup] = useState(null);
 
   const handleFileChange = (e, site) => {
     if (e.target.files && e.target.files[0]) {
@@ -11,6 +13,21 @@ const PatientQuestionnaire = () => {
         [site]: e.target.files[0]
       }));
     }
+  };
+
+  const handlePhotoSelect = (file, site) => {
+    setPhotos(prevPhotos => ({
+      ...prevPhotos,
+      [site]: file
+    }));
+  };
+
+  const openPhotoPopup = (site) => {
+    setActivePhotoPopup(site);
+  };
+
+  const closePhotoPopup = () => {
+    setActivePhotoPopup(null);
   };
 
   const handleSubmit = (e) => {
@@ -311,15 +328,14 @@ const PatientQuestionnaire = () => {
           <div className="multi-input-group">
             {[1, 2, 3, 4, 5, 6].map(site => (
               <div key={site} className="file-input-container">
-                <label htmlFor={`photo-site-${site}`}>Site {site}:</label>
-                <input
-                  type="file"
-                  accept="image/*"
-                  capture="user"
-                  id={`photo-site-${site}`}
-                  onChange={(e) => handleFileChange(e, `site${site}`)}
-                  className="file-input"
-                />
+                <label>Site {site}:</label>
+                <button 
+                  type="button" 
+                  className="file-upload-button"
+                  onClick={() => openPhotoPopup(`site${site}`)}
+                >
+                  {photos[`site${site}`] ? 'Change Photo' : 'Add Photo'}
+                </button>
                 {photos[`site${site}`] && (
                   <div className="file-item">
                     {photos[`site${site}`].name}
@@ -328,6 +344,14 @@ const PatientQuestionnaire = () => {
               </div>
             ))}
           </div>
+          {activePhotoPopup && (
+            <FileUploadPopup
+              isOpen={!!activePhotoPopup}
+              onClose={closePhotoPopup}
+              onFileSelect={handlePhotoSelect}
+              site={activePhotoPopup.replace('site', '')}
+            />
+          )}
         </div>
 
         {/* Submit Button */}

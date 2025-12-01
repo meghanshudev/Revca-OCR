@@ -220,3 +220,21 @@
   flex-direction: column;
   gap: 0.5rem;
 }
+
+.file-upload-button {
+  padding: 0.8rem;
+  background-color: var(--primary-color);
+  color: white;
+  border: none;
+  border-radius: var(--border-radius);
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 600;
+  transition: var(--transition);
+  width: 100%;
+}
+
+.file-upload-button:hover {
+  background-color: var(--secondary-color);
+  transform: translateY(-2px);
+}

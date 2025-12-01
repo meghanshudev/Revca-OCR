@@ -1,10 +1,13 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import './Questionnaire.css';
+import FileUploadPopup from './FileUploadPopup';
 
 const PhysicianQuestionnaire = () => {
   const [photos, setPhotos] = useState({});
   const [slides, setSlides] = useState({});
+  const [activePhotoPopup, setActivePhotoPopup] = useState(null);
+  const [activeSlidePopup, setActiveSlidePopup] = useState(null);
 
   const handleFileChange = (e, site) => {
     if (e.target.files && e.target.files[0]) {
@@ -22,6 +25,36 @@ const PhysicianQuestionnaire = () => {
         [site]: e.target.files[0]
       }));
     }
+  };
+
+  const handlePhotoSelect = (file, site) => {
+    setPhotos(prevPhotos => ({
+      ...prevPhotos,
+      [site]: file
+    }));
+  };
+
+  const handleSlideSelect = (file, site) => {
+    setSlides(prevSlides => ({
+      ...prevSlides,
+      [site]: file
+    }));
+  };
+
+  const openPhotoPopup = (site) => {
+    setActivePhotoPopup(site);
+  };
+
+  const closePhotoPopup = () => {
+    setActivePhotoPopup(null);
+  };
+
+  const openSlidePopup = (site) => {
+    setActiveSlidePopup(site);
+  };
+
+  const closeSlidePopup = () => {
+    setActiveSlidePopup(null);
   };
 
   const handleSubmit = (e) => {
@@ -118,15 +151,14 @@ const PhysicianQuestionnaire = () => {
           <div className="multi-input-group">
             {[1, 2, 3, 4, 5, 6].map(site => (
               <div key={site} className="file-input-container">
-                <label htmlFor={`photo-site-${site}`}>Site {site}:</label>
-                <input
-                  type="file"
-                  accept="image/*"
-                  capture="environment"
-                  id={`photo-site-${site}`}
-                  onChange={(e) => handleFileChange(e, `site${site}`)}
-                  className="file-input"
-                />
+                <label>Site {site}:</label>
+                <button 
+                  type="button" 
+                  className="file-upload-button"
+                  onClick={() => openPhotoPopup(`site${site}`)}
+                >
+                  {photos[`site${site}`] ? 'Change Photo' : 'Add Photo'}
+                </button>
                 {photos[`site${site}`] && (
                   <div className="file-item">
                     {photos[`site${site}`].name}
@@ -135,20 +167,28 @@ const PhysicianQuestionnaire = () => {
               </div>
             ))}
           </div>
+          {activePhotoPopup && (
+            <FileUploadPopup
+              isOpen={!!activePhotoPopup}
+              onClose={closePhotoPopup}
+              onFileSelect={handlePhotoSelect}
+              site={activePhotoPopup.replace('site', '')}
+            />
+          )}
         </div>
         <div className="form-group">
           <label>Histopathological Slides (uploaded from optrascan):</label>
           <div className="multi-input-group">
             {[1, 2, 3, 4, 5, 6].map(site => (
               <div key={site} className="file-input-container">
-                <label htmlFor={`slide-site-${site}`}>Site {site}:</label>
-                <input
-                  type="file"
-                  accept="image/*"
-                  id={`slide-site-${site}`}
-                  onChange={(e) => handleSlideChange(e, `site${site}`)}
-                  className="file-input"
-                />
+                <label>Site {site}:</label>
+                <button 
+                  type="button" 
+                  className="file-upload-button"
+                  onClick={() => openSlidePopup(`site${site}`)}
+                >
+                  {slides[`site${site}`] ? 'Change Slide' : 'Add Slide'}
+                </button>
                 {slides[`site${site}`] && (
                   <div className="file-item">
                     {slides[`site${site}`].name}
@@ -157,6 +197,14 @@ const PhysicianQuestionnaire = () => {
               </div>
             ))}
           </div>
+          {activeSlidePopup && (
+            <FileUploadPopup
+              isOpen={!!activeSlidePopup}
+              onClose={closeSlidePopup}
+              onFileSelect={handleSlideSelect}
+              site={activeSlidePopup.replace('site', '')}
+            />
+          )}
         </div>
         <div className="form-group">
           <label>Photograph/Biopsy Site Unique Identifier:</label>
