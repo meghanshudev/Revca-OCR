@@ -68,4 +68,46 @@ button:hover {
   .app-title {
     font-size: 2rem;
   }
+  
+  .app-subtitle {
+    font-size: 1rem;
+  }
+  
+  .back-to-selection {
+    padding: 0.6rem 1.2rem;
+    font-size: 0.9rem;
+  }
+  
+  button {
+    padding: 0.7rem 1.2rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .App {
+    padding: 0.3rem;
+  }
+  
+  .app-title {
+    font-size: 1.7rem;
+  }
+  
+  .app-subtitle {
+    font-size: 0.9rem;
+  }
+  
+  .back-to-selection {
+    width: 100%;
+    text-align: center;
+    margin: 0.5rem 0;
+  }
+  
+  nav {
+    padding: 0 0.5rem;
+  }
+  
+  button {
+    width: 100%;
+    margin: 0.3rem 0;
+  }
 }

@@ -39,7 +39,7 @@ const PatientQuestionnaire = () => {
   return (
     <div className="questionnaire-container">
       <h1>Patient Questionnaire</h1>
-      <form onSubmit={handleSubmit}>
+      <form onSubmit={handleSubmit} className="mobile-friendly-form">
         {/* Personal Information Section */}
         <div className="section-header">Personal Information</div>
         <div className="form-group">

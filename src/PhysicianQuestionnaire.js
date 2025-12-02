@@ -71,7 +71,7 @@ const PhysicianQuestionnaire = () => {
           <button type="button" className="add-patient-button">Add Patient</button>
         </Link>
       </div>
-      <form onSubmit={handleSubmit}>
+      <form onSubmit={handleSubmit} className="mobile-friendly-form">
         {/* Patient Information Section */}
         <div className="section-header">Patient Information</div>
         <div className="form-group">

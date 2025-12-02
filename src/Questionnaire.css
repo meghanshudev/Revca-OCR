@@ -158,12 +158,67 @@
 
 @media (max-width: 768px) {
   .questionnaire-container {
-    width: 95%;
-    padding: 1rem;
+    width: 100%;
+    padding: 1rem 0.5rem;
+    margin: 1rem auto;
+  }
+  
+  .questionnaire-container h1 {
+    font-size: 1.8rem;
+  }
+  
+  .section-header {
+    font-size: 1.1rem;
+    padding: 0.7rem;
+  }
+  
+  .questionnaire-container .form-group {
+    padding: 0.8rem;
+    margin-bottom: 1rem;
   }
   
   .multi-input-group {
     grid-template-columns: 1fr;
+    gap: 0.8rem;
+  }
+  
+  .questionnaire-container .radio-group {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+  
+  .questionnaire-container .radio-option {
+    margin-right: 0;
+    width: 100%;
+  }
+  
+  .submit-button {
+    padding: 0.8rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .questionnaire-container {
+    width: 100%;
+    padding: 0.5rem;
+    box-shadow: none;
+    border-radius: 0;
+  }
+  
+  .questionnaire-container h1 {
+    font-size: 1.5rem;
+  }
+  
+  .questionnaire-container label {
+    font-size: 0.95rem;
+  }
+  
+  .questionnaire-container input[type="text"],
+  .questionnaire-container select,
+  .questionnaire-container textarea {
+    padding: 0.7rem;
+    font-size: 0.95rem;
   }
 }
 
@@ -172,6 +227,23 @@
   justify-content: space-between;
   align-items: center;
   margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+}
+
+@media (max-width: 768px) {
+  .header-with-button {
+    flex-direction: column;
+    gap: 1rem;
+  }
+  
+  .header-with-button h1 {
+    margin-bottom: 0.5rem;
+  }
+  
+  .header-with-button .add-patient-button {
+    width: 100%;
+    margin: 0;
+  }
 }
 
 .add-patient-button {
@@ -237,4 +309,117 @@
 .file-upload-button:hover {
   background-color: var(--secondary-color);
   transform: translateY(-2px);
+}
+
+/* Mobile-friendly form styles */
+.mobile-friendly-form input[type="radio"],
+.mobile-friendly-form input[type="checkbox"] {
+  width: 24px;
+  height: 24px;
+  margin-right: 8px;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  border: 2px solid var(--primary-color);
+  border-radius: 50%;
+  outline: none;
+  transition: all 0.2s ease;
+  position: relative;
+  cursor: pointer;
+}
+
+.mobile-friendly-form input[type="checkbox"] {
+  border-radius: 4px;
+}
+
+.mobile-friendly-form input[type="radio"]:checked,
+.mobile-friendly-form input[type="checkbox"]:checked {
+  background-color: var(--primary-color);
+}
+
+.mobile-friendly-form input[type="radio"]:checked::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 10px;
+  height: 10px;
+  background-color: white;
+  border-radius: 50%;
+}
+
+.mobile-friendly-form input[type="checkbox"]:checked::after {
+  content: '✓';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: white;
+  font-size: 14px;
+}
+
+.mobile-friendly-form .radio-option {
+  display: flex;
+  align-items: center;
+  padding: 8px 0;
+}
+
+.mobile-friendly-form .radio-option label {
+  margin-bottom: 0;
+}
+
+@media (max-width: 768px) {
+  .mobile-friendly-form .radio-option {
+    padding: 10px 0;
+  }
+  
+  .mobile-friendly-form input[type="text"],
+  .mobile-friendly-form select,
+  .mobile-friendly-form textarea {
+    font-size: 16px; /* Prevents iOS zoom on focus */
+    padding: 12px;
+    border-radius: 8px;
+    margin-bottom: 8px;
+    -webkit-appearance: none; /* Removes default styling on iOS */
+    appearance: none;
+  }
+  
+  .mobile-friendly-form select {
+    background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%232c3e50' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    background-size: 16px;
+    padding-right: 40px;
+  }
+}
+
+@media (max-width: 480px) {
+  .mobile-friendly-form .file-input-container {
+    margin-bottom: 15px;
+  }
+  
+  .mobile-friendly-form .file-upload-button {
+    padding: 10px;
+  }
+  
+  .mobile-friendly-form .submit-button {
+    padding: 14px;
+    font-size: 1.1rem;
+    font-weight: 700;
+    margin-top: 1rem;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+  }
+}
+
+/* Fix for iOS Safari input styling */
+@supports (-webkit-touch-callout: none) {
+  .mobile-friendly-form input,
+  .mobile-friendly-form select,
+  .mobile-friendly-form textarea,
+  .mobile-friendly-form button {
+    -webkit-appearance: none;
+    border-radius: 8px;
+  }
 }
