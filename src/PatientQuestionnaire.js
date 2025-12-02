@@ -6,6 +6,7 @@ import { API_BASE_URL } from './config';
 const PatientQuestionnaire = () => {
   const [formData, setFormData] = useState({
     patient_identification_number: '',
+    email: '',
     age: '',
     gender: '',
     ethnicity: '',
@@ -75,26 +76,36 @@ const PatientQuestionnaire = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const postData = new FormData();
-    
-    Object.keys(formData).forEach(key => {
-      postData.append(key, formData[key]);
+
+    const dataToSend = { ...formData };
+
+    // Convert empty strings to null, as the backend might expect that for optional fields
+    Object.keys(dataToSend).forEach(key => {
+      if (dataToSend[key] === '') {
+        dataToSend[key] = null;
+      }
     });
 
-    Object.keys(photos).forEach(key => {
-      postData.append(key, photos[key]);
-    });
+    // Note: This implementation does not handle file uploads.
+    // The API seems to expect a JSON body, which cannot contain file objects directly.
+    // A separate mechanism or endpoint is likely required for photos.
 
     try {
-      const response = await fetch(`${API_BASE_URL}/patient-questionnaire/`, {
+      const response = await fetch(`https://serenity.medista.ai:9030/api/v1/patient_questionnaire/`, {
         method: 'POST',
-        body: postData,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(dataToSend),
       });
 
       if (response.ok) {
         alert('Form submitted successfully!');
+        // TODO: Implement photo upload logic here. This might require a separate API call.
       } else {
-        alert('Form submission failed');
+        const errorData = await response.json();
+        console.error('Form submission failed:', errorData);
+        alert(`Form submission failed: ${JSON.stringify(errorData)}`);
       }
     } catch (error) {
       console.error('Form submission error:', error);
@@ -111,6 +122,10 @@ const PatientQuestionnaire = () => {
         <div className="form-group">
           <label>Patient Identification Number:</label>
           <input type="text" name="patient_identification_number" value={formData.patient_identification_number} onChange={handleChange} />
+        </div>
+        <div className="form-group">
+          <label>Email:</label>
+          <input type="email" name="email" value={formData.email} onChange={handleChange} required />
         </div>
         <div className="form-group">
           <label>Age:</label>
