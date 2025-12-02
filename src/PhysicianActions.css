@@ -1,0 +1,53 @@
+.physician-actions-container {
+  margin-bottom: 2rem;
+  padding: 1.5rem;
+  background-color: #f9f9f9;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  text-align: center;
+}
+
+.physician-actions-container h2 {
+  margin-top: 0;
+  margin-bottom: 1.5rem;
+  font-size: 1.5rem;
+  color: #333;
+}
+
+.physician-actions-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+}
+
+.action-button {
+  padding: 0.75rem 1.5rem;
+  font-size: 1rem;
+  color: white;
+  background-color: #007bff;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.action-button:hover {
+  background-color: #0056b3;
+}
+.patient-list-container {
+  margin-top: 2rem;
+}
+
+.patient-list-container h2 {
+  margin-bottom: 1rem;
+}
+
+.patient-list-container ul {
+  list-style-type: none;
+  padding: 0;
+}
+
+.patient-list-container li {
+  padding: 0.5rem;
+  border-bottom: 1px solid #eee;
+}
