@@ -105,7 +105,8 @@ export const translations = {
     patientImages: "Patient Images",
     oralSite: "Oral Site",
     viewImage: "View Image",
-    close: "Close"
+    close: "Close",
+    loading: "Loading..."
   },
   hi: {
     title: "रोगी प्रश्नावली",
@@ -213,7 +214,8 @@ export const translations = {
     patientImages: "रोगी की तस्वीरें",
     oralSite: "मौखिक स्थान",
     viewImage: "छवि देखें",
-    close: "बंद करें"
+    close: "बंद करें",
+    loading: "लोड हो रहा है..."
   },
   mr: {
     title: "रुग्ण प्रश्नावली",
@@ -321,6 +323,7 @@ export const translations = {
     patientImages: "रुग्णाच्या प्रतिमा",
     oralSite: "तोंडाचे स्थान",
     viewImage: "प्रतिमा पहा",
-    close: "बंद करा"
+    close: "बंद करा",
+    loading: "लोड करत आहे..."
   }
 };

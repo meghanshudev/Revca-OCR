@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import './Questionnaire.css';
 import FileUploadPopup from './FileUploadPopup';
 import { API_BASE_URL } from './config';
 import Loader from './Loader';
 import { useLanguage } from './LanguageContext';
+import './FileUploadPopup.css'; // For image viewer styling
 
 const PatientQuestionnaire = ({ initialPatientId, existingData }) => {
   const { t } = useLanguage();
@@ -59,9 +60,147 @@ const PatientQuestionnaire = ({ initialPatientId, existingData }) => {
   const [imageIds, setImageIds] = useState({});
   const [imageNotes, setImageNotes] = useState({});
   const [activePhotoPopup, setActivePhotoPopup] = useState(null);
+  const [imageViewerOpen, setImageViewerOpen] = useState(false);
+  const [currentImage, setCurrentImage] = useState(null);
+  const [existingImages, setExistingImages] = useState({});
+  const [loadingImageId, setLoadingImageId] = useState(null);
+  
+  // Process existing images when component mounts or existingData changes
+  useEffect(() => {
+    if (existingData && existingData.images && existingData.images.length > 0) {
+      const imageMap = {};
+      
+      // Group images by their tag (site)
+      existingData.images.forEach(image => {
+        if (image.tag) {
+          imageMap[image.tag] = image;
+        }
+      });
+      
+      setExistingImages(imageMap);
+      
+      // Pre-populate imageIds for existing images
+      const ids = {};
+      existingData.images.forEach(image => {
+        if (image.tag) {
+          ids[image.tag] = image.id;
+        }
+      });
+      setImageIds(ids);
+      
+      // Pre-populate notes for existing images
+      const notes = {};
+      existingData.images.forEach(image => {
+        if (image.tag && image.note) {
+          notes[image.tag] = image.note;
+        }
+      });
+      setImageNotes(notes);
+      
+      // Mark photos as existing
+      const photoStatus = {};
+      existingData.images.forEach(image => {
+        if (image.tag) {
+          photoStatus[image.tag] = true;
+        }
+      });
+      setPhotos(photoStatus);
+    }
+  }, [existingData]);
 
-  const handleFileChange = (e, site) => {
-    // This function may no longer be necessary if all file selection happens in the popup
+  // Function to fetch and view an image
+  const fetchAndViewImage = async (imageId, tag) => {
+    // Set loading state for this specific image
+    setLoadingImageId(imageId);
+    
+    try {
+      // Fetch the image from the API
+      const response = await fetch(`${API_BASE_URL}/api/v1/image/${imageId}`);
+      
+      if (response.ok) {
+        // Convert the response to a blob
+        const imageBlob = await response.blob();
+        // Create a URL for the blob
+        const imageUrl = URL.createObjectURL(imageBlob);
+        
+        // Set the current image with URL and metadata
+        setCurrentImage({
+          url: imageUrl,
+          tag: tag,
+          note: imageNotes[tag] || ''
+        });
+        
+        // Open the image viewer
+        setImageViewerOpen(true);
+      } else {
+        console.error('Failed to fetch image');
+        alert(t('imageLoadError'));
+      }
+    } catch (error) {
+      console.error('Error fetching image:', error);
+      alert(t('submissionError'));
+    } finally {
+      // Clear loading state
+      setLoadingImageId(null);
+    }
+  };
+
+  const closeImageViewer = () => {
+    setImageViewerOpen(false);
+    // Release the object URL to free memory
+    if (currentImage && currentImage.url) {
+      URL.revokeObjectURL(currentImage.url);
+    }
+    setCurrentImage(null);
+  };
+
+  // Image viewer component
+  const ImageViewer = () => {
+    if (!imageViewerOpen || !currentImage) return null;
+
+    return (
+      <div className="popup-overlay">
+        <div className="popup-container image-viewer-container">
+          <div className="popup-header">
+            <h3>{t(getSiteTranslationKey(currentImage.tag)) || currentImage.tag}</h3>
+            <button className="close-button" onClick={closeImageViewer}>×</button>
+          </div>
+          <div className="popup-content">
+            <div className="preview-container">
+              <img src={currentImage.url} alt={currentImage.tag} className="image-preview" />
+              {currentImage.note && (
+                <div className="image-note-display">
+                  <strong>{t('note')}:</strong> {currentImage.note}
+                </div>
+              )}
+            </div>
+          </div>
+          <div className="popup-footer">
+            <button type="button" className="cancel-button" onClick={closeImageViewer}>{t('close')}</button>
+          </div>
+        </div>
+      </div>
+    );
+  };
+  
+  // Helper function to get translation key for a site
+  const getSiteTranslationKey = (tag) => {
+    const siteTranslationMap = {
+      "Upper Lip": "upperLip",
+      "Lower Lip": "lowerLip",
+      "Left Cheeks (Inside)": "leftCheek",
+      "Right Cheeks (Inside)": "rightCheek",
+      "Tongue Top": "tongueTop",
+      "Tongue Back": "tongueBack",
+      "Left Side Tongue": "leftSideTongue",
+      "Right Side Tongue": "rightSideTongue",
+      "Roof of Mouth": "roofOfMouth",
+      "Bottom of Mouth": "bottomOfMouth",
+      "Gums": "gums",
+      "Back of Throat": "backOfThroat"
+    };
+    
+    return siteTranslationMap[tag];
   };
 
   const handlePhotoSelect = (result, file, site, note) => {
@@ -160,7 +299,9 @@ const PatientQuestionnaire = ({ initialPatientId, existingData }) => {
     e.preventDefault();
     setIsLoading(true);
 
+    // Format images as just an array of IDs as expected by the API
     const images = Object.values(imageIds);
+    
     const dataToSend = { ...formData, images };
 
     // Convert empty strings to null, as the backend might expect that for optional fields
@@ -379,7 +520,7 @@ const PatientQuestionnaire = ({ initialPatientId, existingData }) => {
       {isLoading && <Loader />}
       {renderDialog()}
       <h1>{t('title')}</h1>
-      <form onSubmit={handleSubmit} className="mobile-friendly-form">
+      <form onSubmit={handleSubmit} className="mobile-friendly-form" style={{ opacity: isLoading ? 0.7 : 1, pointerEvents: isLoading ? 'none' : 'auto' }}>
         {/* Personal Information Section */}
         <div className="section-header">{t('personalInfo')}</div>
         <div className="form-group">
@@ -652,13 +793,46 @@ const PatientQuestionnaire = ({ initialPatientId, existingData }) => {
               <div key={site.key} className="file-input-container">
                 <div className="file-input-row">
                   <label>{site.label}:</label>
-                  <button
-                    type="button"
-                    className="file-upload-button"
-                    onClick={() => openPhotoPopup(site.key)}
-                  >
-                    {photos[site.key] ? t('changePhoto') : t('addPhoto')}
-                  </button>
+                  <div style={{ display: 'flex', gap: '10px' }}>
+                    {photos[site.key] && imageIds[site.key] && (
+                      <button
+                        type="button"
+                        className="file-view-button"
+                        onClick={() => fetchAndViewImage(imageIds[site.key], site.key)}
+                        disabled={loadingImageId === imageIds[site.key]}
+                        style={{ 
+                          backgroundColor: '#3498db', 
+                          color: 'white',
+                          border: 'none',
+                          padding: '8px 12px',
+                          borderRadius: '4px',
+                          cursor: loadingImageId === imageIds[site.key] ? 'wait' : 'pointer'
+                        }}
+                      >
+                        {loadingImageId === imageIds[site.key] ? (
+                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                            <div style={{ 
+                              border: '2px solid #f3f3f3',
+                              borderTop: '2px solid #ffffff',
+                              borderRadius: '50%',
+                              width: '12px',
+                              height: '12px',
+                              animation: 'spin 1s linear infinite',
+                              marginRight: '8px'
+                            }}></div>
+                            {t('loading')}
+                          </div>
+                        ) : t('viewImage')}
+                      </button>
+                    )}
+                    <button
+                      type="button"
+                      className="file-upload-button"
+                      onClick={() => openPhotoPopup(site.key)}
+                    >
+                      {photos[site.key] ? t('changePhoto') : t('addPhoto')}
+                    </button>
+                  </div>
                 </div>
                 {imageNotes[site.key] && (
                   <div className="image-note-display">
@@ -677,12 +851,28 @@ const PatientQuestionnaire = ({ initialPatientId, existingData }) => {
               initialNote={imageNotes[activePhotoPopup] || ''}
             />
           )}
+          
+          {/* Image viewer popup */}
+          <ImageViewer />
         </div>
 
         {/* Submit Button */}
         <div className="form-group">
           <button type="submit" className="submit-button" disabled={isLoading}>
-            {isLoading ? t('submitting') : t('submit')}
+            {isLoading ? (
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <div style={{ 
+                  border: '2px solid #f3f3f3',
+                  borderTop: '2px solid #ffffff',
+                  borderRadius: '50%',
+                  width: '16px',
+                  height: '16px',
+                  animation: 'spin 1s linear infinite',
+                  marginRight: '10px'
+                }}></div>
+                {t('submitting')}
+              </div>
+            ) : t('submit')}
           </button>
         </div>
       </form>
