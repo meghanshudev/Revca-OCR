@@ -4,6 +4,7 @@ import PatientQuestionnaire from './PatientQuestionnaire';
 import PhysicianQuestionnaire from './PhysicianQuestionnaire';
 import Login from './Login';
 import LanguageSelection from './LanguageSelection';
+import PatientTypeSelection from './PatientTypeSelection';
 import { LanguageProvider } from './LanguageContext';
 import './App.css';
 
@@ -17,6 +18,8 @@ function AppContent() {
   const isAuthenticated = localStorage.getItem('isAuthenticated');
   const navigate = useNavigate();
   const [languageSelected, setLanguageSelected] = useState(false);
+  const [patientTypeSelected, setPatientTypeSelected] = useState(false);
+  const [generatedPatientId, setGeneratedPatientId] = useState(null);
 
   const handleLogout = () => {
     localStorage.removeItem('isAuthenticated');
@@ -26,6 +29,17 @@ function AppContent() {
 
   const handleLanguageSelect = () => {
     setLanguageSelected(true);
+  };
+
+  const [existingPatientData, setExistingPatientData] = useState(null);
+
+  const handlePatientTypeSelect = (type, data) => {
+    setPatientTypeSelected(true);
+    if (type === 'new') {
+      setGeneratedPatientId(data);
+    } else if (type === 'existing') {
+      setExistingPatientData(data);
+    }
   };
 
   return (
@@ -42,15 +56,20 @@ function AppContent() {
       )}
       <Routes>
         <Route path="/" element={<Navigate to="/patient" />} />
-        <Route 
-          path="/patient" 
+        <Route
+          path="/patient"
           element={
             !languageSelected ? (
               <LanguageSelection onLanguageSelect={handleLanguageSelect} />
+            ) : !patientTypeSelected ? (
+              <PatientTypeSelection onPatientTypeSelect={handlePatientTypeSelect} />
             ) : (
-              <PatientQuestionnaire />
+              <PatientQuestionnaire
+                initialPatientId={generatedPatientId}
+                existingData={existingPatientData}
+              />
             )
-          } 
+          }
         />
         <Route path="/login" element={<Login />} />
         <Route

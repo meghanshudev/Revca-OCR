@@ -5,49 +5,50 @@ import { API_BASE_URL } from './config';
 import Loader from './Loader';
 import { useLanguage } from './LanguageContext';
 
-const PatientQuestionnaire = () => {
+const PatientQuestionnaire = ({ initialPatientId, existingData }) => {
   const { t } = useLanguage();
   const [isLoading, setIsLoading] = useState(false);
   const [dialog, setDialog] = useState({ isOpen: false, message: '', isError: false });
   const [formData, setFormData] = useState({
-    patient_identification_number: '',
-    email: '',
-    age: '',
-    gender: '',
-    ethnicity: '',
-    education_level: '',
-    occupation: '',
-    smartphone_owner: '',
-    cancer_awareness: '',
-    family_history_oral_cancer: '',
-    smoking_status: '',
-    years_of_smoking: '',
-    packs_per_day: '',
-    years_since_stopping: '',
-    alcohol_consumption: '',
-    tobacco_chewing_status: '',
-    tobacco_chewing_times_per_day: '',
-    tobacco_chewing_duration_years: '',
-    betel_nut_chewing_status: '',
-    betel_nut_chewing_times_per_day: '',
-    betel_nut_chewing_duration_years: '',
-    gutkha_chewing_status: '',
-    gutkha_chewing_times_per_day: '',
-    gutkha_chewing_duration_years: '',
-    betel_quid_chewing_status: '',
-    betel_quid_chewing_times_per_day: '',
-    betel_quid_chewing_duration_years: '',
-    mishri_use_status: '',
-    mishri_use_times_per_day: '',
-    mishri_use_duration_years: '',
-    symptoms_lumps: '',
-    symptoms_soreness: '',
-    symptoms_pain_swallowing: '',
-    symptoms_difficulty_swallowing: '',
-    symptoms_difficulty_moving_tongue: '',
-    symptoms_difficulty_opening_jaw: '',
-    symptoms_white_patches: '',
-    duration_of_symptoms: '',
+    patient_identification_number: existingData?.patient_identification_number || initialPatientId || '',
+    email: existingData?.email || '',
+    age: existingData?.age || '',
+    gender: existingData?.gender || '',
+    ethnicity: existingData?.ethnicity || '',
+    ethnicity_other: existingData?.other_ethnicity || '',
+    education_level: existingData?.education_level || '',
+    occupation: existingData?.occupation || '',
+    smartphone_owner: existingData?.smartphone_owner || '',
+    cancer_awareness: existingData?.cancer_awareness || '',
+    family_history_oral_cancer: existingData?.family_history || '',
+    smoking_status: existingData?.smoking_status || '',
+    years_of_smoking: existingData?.smoking_years || '',
+    packs_per_day: existingData?.packs_per_day || '',
+    years_since_stopping: existingData?.years_since_stopping || '',
+    alcohol_consumption: existingData?.alcohol_consumption || '',
+    tobacco_chewing_status: existingData?.tobacco_chewing_status || '',
+    tobacco_chewing_times_per_day: existingData?.tobacco_chewing_frequency || '',
+    tobacco_chewing_duration_years: existingData?.tobacco_chewing_duration || '',
+    betel_nut_chewing_status: existingData?.betel_nut_chewing_status || '',
+    betel_nut_chewing_times_per_day: existingData?.betel_nut_chewing_frequency || '',
+    betel_nut_chewing_duration_years: existingData?.betel_nut_chewing_duration || '',
+    gutkha_chewing_status: existingData?.gutkha_chewing_status || '',
+    gutkha_chewing_times_per_day: existingData?.gutkha_chewing_frequency || '',
+    gutkha_chewing_duration_years: existingData?.gutkha_chewing_duration || '',
+    betel_quid_chewing_status: existingData?.betel_quid_chewing_status || '',
+    betel_quid_chewing_times_per_day: existingData?.betel_quid_chewing_frequency || '',
+    betel_quid_chewing_duration_years: existingData?.betel_quid_chewing_duration || '',
+    mishri_use_status: existingData?.mishri_use_status || '',
+    mishri_use_times_per_day: existingData?.mishri_use_frequency || '',
+    mishri_use_duration_years: existingData?.mishri_use_duration || '',
+    symptoms_lumps: existingData?.symptoms_lumps || '',
+    symptoms_soreness: existingData?.symptoms_soreness || '',
+    symptoms_pain_swallowing: existingData?.symptoms_pain_swallowing || '',
+    symptoms_difficulty_swallowing: existingData?.symptoms_difficulty_swallowing || '',
+    symptoms_difficulty_moving_tongue: existingData?.symptoms_difficulty_tongue || '',
+    symptoms_difficulty_opening_jaw: existingData?.symptoms_difficulty_jaw || '',
+    symptoms_white_patches: existingData?.symptoms_white_patches || '',
+    duration_of_symptoms: existingData?.symptoms_duration || '',
   });
   const [photos, setPhotos] = useState({});
   const [imageIds, setImageIds] = useState({});
@@ -85,44 +86,45 @@ const PatientQuestionnaire = () => {
 
   const resetForm = () => {
     setFormData({
-      patient_identification_number: '',
-      email: '',
-      age: '',
-      gender: '',
-      ethnicity: '',
-      education_level: '',
-      occupation: '',
-      smartphone_owner: '',
-      cancer_awareness: '',
-      family_history_oral_cancer: '',
-      smoking_status: '',
-      years_of_smoking: '',
-      packs_per_day: '',
-      years_since_stopping: '',
-      alcohol_consumption: '',
-      tobacco_chewing_status: '',
-      tobacco_chewing_times_per_day: '',
-      tobacco_chewing_duration_years: '',
-      betel_nut_chewing_status: '',
-      betel_nut_chewing_times_per_day: '',
-      betel_nut_chewing_duration_years: '',
-      gutkha_chewing_status: '',
-      gutkha_chewing_times_per_day: '',
-      gutkha_chewing_duration_years: '',
-      betel_quid_chewing_status: '',
-      betel_quid_chewing_times_per_day: '',
-      betel_quid_chewing_duration_years: '',
-      mishri_use_status: '',
-      mishri_use_times_per_day: '',
-      mishri_use_duration_years: '',
-      symptoms_lumps: '',
-      symptoms_soreness: '',
-      symptoms_pain_swallowing: '',
-      symptoms_difficulty_swallowing: '',
-      symptoms_difficulty_moving_tongue: '',
-      symptoms_difficulty_opening_jaw: '',
-      symptoms_white_patches: '',
-      duration_of_symptoms: '',
+      patient_identification_number: existingData?.patient_identification_number || initialPatientId || '',
+      email: existingData?.email || '',
+      age: existingData?.age || '',
+      gender: existingData?.gender || '',
+      ethnicity: existingData?.ethnicity || '',
+      ethnicity_other: existingData?.other_ethnicity || '',
+      education_level: existingData?.education_level || '',
+      occupation: existingData?.occupation || '',
+      smartphone_owner: existingData?.smartphone_owner === true || existingData?.smartphone_owner === 'true' ? 'yes' : (existingData?.smartphone_owner === false || existingData?.smartphone_owner === 'false' ? 'no' : ''),
+      cancer_awareness: existingData?.cancer_awareness === true || existingData?.cancer_awareness === 'true' ? 'yes' : (existingData?.cancer_awareness === false || existingData?.cancer_awareness === 'false' ? 'no' : ''),
+      family_history_oral_cancer: existingData?.family_history === true || existingData?.family_history === 'true' ? 'yes' : (existingData?.family_history === false || existingData?.family_history === 'false' ? 'no' : ''),
+      smoking_status: existingData?.smoking_status || '',
+      years_of_smoking: existingData?.smoking_years || '',
+      packs_per_day: existingData?.packs_per_day || '',
+      years_since_stopping: existingData?.years_since_stopping || '',
+      alcohol_consumption: existingData?.alcohol_consumption || '',
+      tobacco_chewing_status: existingData?.tobacco_chewing_status || '',
+      tobacco_chewing_times_per_day: existingData?.tobacco_chewing_frequency || '',
+      tobacco_chewing_duration_years: existingData?.tobacco_chewing_duration || '',
+      betel_nut_chewing_status: existingData?.betel_nut_chewing_status || '',
+      betel_nut_chewing_times_per_day: existingData?.betel_nut_chewing_frequency || '',
+      betel_nut_chewing_duration_years: existingData?.betel_nut_chewing_duration || '',
+      gutkha_chewing_status: existingData?.gutkha_chewing_status || '',
+      gutkha_chewing_times_per_day: existingData?.gutkha_chewing_frequency || '',
+      gutkha_chewing_duration_years: existingData?.gutkha_chewing_duration || '',
+      betel_quid_chewing_status: existingData?.betel_quid_chewing_status || '',
+      betel_quid_chewing_times_per_day: existingData?.betel_quid_chewing_frequency || '',
+      betel_quid_chewing_duration_years: existingData?.betel_quid_chewing_duration || '',
+      mishri_use_status: existingData?.mishri_use_status || '',
+      mishri_use_times_per_day: existingData?.mishri_use_frequency || '',
+      mishri_use_duration_years: existingData?.mishri_use_duration || '',
+      symptoms_lumps: existingData?.symptoms_lumps === true || existingData?.symptoms_lumps === 'true' ? 'yes' : (existingData?.symptoms_lumps === false || existingData?.symptoms_lumps === 'false' ? 'no' : ''),
+      symptoms_soreness: existingData?.symptoms_soreness === true || existingData?.symptoms_soreness === 'true' ? 'yes' : (existingData?.symptoms_soreness === false || existingData?.symptoms_soreness === 'false' ? 'no' : ''),
+      symptoms_pain_swallowing: existingData?.symptoms_pain_swallowing === true || existingData?.symptoms_pain_swallowing === 'true' ? 'yes' : (existingData?.symptoms_pain_swallowing === false || existingData?.symptoms_pain_swallowing === 'false' ? 'no' : ''),
+      symptoms_difficulty_swallowing: existingData?.symptoms_difficulty_swallowing === true || existingData?.symptoms_difficulty_swallowing === 'true' ? 'yes' : (existingData?.symptoms_difficulty_swallowing === false || existingData?.symptoms_difficulty_swallowing === 'false' ? 'no' : ''),
+      symptoms_difficulty_moving_tongue: existingData?.symptoms_difficulty_tongue === true || existingData?.symptoms_difficulty_tongue === 'true' ? 'yes' : (existingData?.symptoms_difficulty_tongue === false || existingData?.symptoms_difficulty_tongue === 'false' ? 'no' : ''),
+      symptoms_difficulty_opening_jaw: existingData?.symptoms_difficulty_jaw === true || existingData?.symptoms_difficulty_jaw === 'true' ? 'yes' : (existingData?.symptoms_difficulty_jaw === false || existingData?.symptoms_difficulty_jaw === 'false' ? 'no' : ''),
+      symptoms_white_patches: existingData?.symptoms_white_patches === true || existingData?.symptoms_white_patches === 'true' ? 'yes' : (existingData?.symptoms_white_patches === false || existingData?.symptoms_white_patches === 'false' ? 'no' : ''),
+      duration_of_symptoms: existingData?.symptoms_duration || '',
     });
     setPhotos({});
     setImageIds({});
@@ -375,7 +377,13 @@ const PatientQuestionnaire = () => {
         <div className="section-header">{t('personalInfo')}</div>
         <div className="form-group">
           <label>{t('patientId')}:</label>
-          <input type="text" name="patient_identification_number" value={formData.patient_identification_number} onChange={handleChange} />
+          <input
+            type="text"
+            name="patient_identification_number"
+            value={formData.patient_identification_number}
+            onChange={handleChange}
+            disabled={!!initialPatientId || !!existingData}
+          />
         </div>
         <div className="form-group">
           <label>{t('email')}:</label>
@@ -408,7 +416,7 @@ const PatientQuestionnaire = () => {
             <div className="radio-option">
               <input type="radio" id="other_ethnicity" name="ethnicity" value="other" checked={formData.ethnicity === 'other'} onChange={handleChange} />
               <label htmlFor="other_ethnicity">{t('other')}:</label>
-              <input type="text" name="ethnicity_other" placeholder={t('pleaseSpecify')} onChange={handleChange} />
+              <input type="text" name="ethnicity_other" value={formData.ethnicity_other} placeholder={t('pleaseSpecify')} onChange={handleChange} />
             </div>
           </div>
         </div>

@@ -92,7 +92,15 @@ export const translations = {
     formSubmitted: "Form submitted successfully!",
     formFailed: "Form submission failed",
     submissionError: "An error occurred during form submission",
-    ok: "OK"
+    ok: "OK",
+    newPatient: "New Patient",
+    existingPatient: "Existing Patient",
+    generatingId: "Generating Patient ID...",
+    enterPatientId: "Enter Patient ID",
+    fetchDetails: "Fetch Details",
+    fetchingDetails: "Fetching Details...",
+    patientNotFound: "Patient not found",
+    back: "Back"
   },
   hi: {
     title: "रोगी प्रश्नावली",
@@ -187,7 +195,15 @@ export const translations = {
     formSubmitted: "फॉर्म सफलतापूर्वक जमा किया गया!",
     formFailed: "फॉर्म जमा करना विफल रहा",
     submissionError: "फॉर्म जमा करने के दौरान एक त्रुटि हुई",
-    ok: "ठीक है"
+    ok: "ठीक है",
+    newPatient: "नए रोगी",
+    existingPatient: "मौजूदा रोगी",
+    generatingId: "रोगी आईडी उत्पन्न कर रहा है...",
+    enterPatientId: "रोगी पहचान संख्या दर्ज करें",
+    fetchDetails: "विवरण प्राप्त करें",
+    fetchingDetails: "विवरण प्राप्त कर रहा है...",
+    patientNotFound: "रोगी नहीं मिला",
+    back: "वापस"
   },
   mr: {
     title: "रुग्ण प्रश्नावली",
