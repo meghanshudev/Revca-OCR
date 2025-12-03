@@ -8,8 +8,8 @@ import Loader from './Loader';
 
 const PhysicianQuestionnaire = () => {
   const [patients, setPatients] = useState([]);
-  const [showPatientList, setShowPatientList] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
+  const [showPatientList, setShowPatientList] = useState(true); // Set to true by default
+  const [isLoading, setIsLoading] = useState(true); // Start with loading state
   const [selectedPatient, setSelectedPatient] = useState(null);
   const [showPrescriptionForm, setShowPrescriptionForm] = useState(false);
   const [prescriptionData, setPrescriptionData] = useState({
@@ -30,11 +30,18 @@ const PhysicianQuestionnaire = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
+  // Fetch patients when component mounts
+  useEffect(() => {
+    fetchPatients();
+  }, []);
+
   const fetchPatients = async () => {
     setIsLoading(true);
-    setShowPatientList(false);
-    setSelectedPatient(null);
-    setShowPrescriptionForm(false);
+    // Don't reset showPatientList to false when loading initially
+    if (!showPatientList) {
+      setSelectedPatient(null);
+      setShowPrescriptionForm(false);
+    }
     const token = localStorage.getItem('token');
     try {
       const response = await fetch(`${API_BASE_URL}/api/v1/patient_questionnaire/`, {
@@ -163,7 +170,7 @@ const PhysicianQuestionnaire = () => {
 
   return (
     <div className="questionnaire-container">
-      <PhysicianActions onViewPatients={fetchPatients} />
+      <PhysicianActions />
       {isLoading && <Loader />}
       
       {showPatientList && !isLoading && !selectedPatient && (
