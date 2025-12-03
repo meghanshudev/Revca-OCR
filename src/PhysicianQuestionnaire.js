@@ -147,6 +147,9 @@ const PhysicianQuestionnaire = () => {
   const [imageViewerOpen, setImageViewerOpen] = useState(false);
   const [currentImage, setCurrentImage] = useState(null);
   const [loadingImageId, setLoadingImageId] = useState(null);
+  const [followupMessages, setFollowupMessages] = useState([]);
+  const [showFollowupPopup, setShowFollowupPopup] = useState(false);
+  const [newFollowupMessage, setNewFollowupMessage] = useState('');
 
   const navigate = useNavigate();
   const location = useLocation();
@@ -155,6 +158,29 @@ const PhysicianQuestionnaire = () => {
   useEffect(() => {
     fetchPatients();
   }, []);
+
+  const fetchFollowupMessages = async (questionnaireId) => {
+    if (!questionnaireId) return;
+    const token = localStorage.getItem('token');
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/v1/physician_questionnaire/${questionnaireId}/followup-messages/`, {
+        headers: {
+          'accept': 'application/json',
+          'Authorization': `Token ${token}`,
+        },
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setFollowupMessages(data || []);
+      } else {
+        console.error('Failed to fetch followup messages');
+        setFollowupMessages([]);
+      }
+    } catch (error) {
+      console.error('Error fetching followup messages:', error);
+      setFollowupMessages([]);
+    }
+  };
 
   const fetchPatients = async (preserveSelected = false) => {
     setIsLoading(true);
@@ -242,8 +268,13 @@ const PhysicianQuestionnaire = () => {
             patient_questionnaire_id: data.id
           });
           setEditingQuestionnaireId(null);
+          setFollowupMessages([]);
         }
         
+        if (todaysQuestionnaire) {
+          fetchFollowupMessages(todaysQuestionnaire.id);
+        }
+
         setImageIds(imageIds);
         setUploadedPhotos(uploadedPhotos);
 
@@ -316,8 +347,13 @@ const PhysicianQuestionnaire = () => {
             patient_questionnaire_id: data.id
           });
           setEditingQuestionnaireId(null);
+          setFollowupMessages([]);
         }
 
+        if (todaysQuestionnaire) {
+          fetchFollowupMessages(todaysQuestionnaire.id);
+        }
+ 
         setImageIds(imageIds);
         setUploadedPhotos(uploadedPhotos);
 
@@ -522,6 +558,49 @@ const PhysicianQuestionnaire = () => {
     );
   };
 
+  const handleFollowupSubmit = async (e) => {
+    e.preventDefault();
+    if (!newFollowupMessage.trim()) {
+      alert('Please enter a message.');
+      return;
+    }
+    if (!editingQuestionnaireId) {
+      alert('Cannot add followup without a questionnaire.');
+      return;
+    }
+
+    setIsLoading(true);
+    const token = localStorage.getItem('token');
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/v1/physician_questionnaire/${editingQuestionnaireId}/followup-messages/`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Token ${token}`,
+        },
+        body: JSON.stringify({
+          message: newFollowupMessage,
+          physician_questionnaire_id: editingQuestionnaireId
+        }),
+      });
+
+      if (response.ok) {
+        alert('Follow-up message added successfully!');
+        setShowFollowupPopup(false);
+        setNewFollowupMessage('');
+        fetchFollowupMessages(editingQuestionnaireId);
+      } else {
+        const errorData = await response.json();
+        throw new Error(`Failed to add follow-up message: ${JSON.stringify(errorData)}`);
+      }
+    } catch (error) {
+      console.error('Error submitting follow-up:', error);
+      alert(`An error occurred: ${error.message}`);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+ 
   const formatBoolean = (value) => {
     if (value === true || value === 'yes') return 'Yes';
     if (value === false || value === 'no') return 'No';
@@ -673,8 +752,14 @@ const PhysicianQuestionnaire = () => {
             >
               Questionnaire
             </button>
+            <button
+              className={`tab-button ${activeTab === 'followups' ? 'active' : ''}`}
+              onClick={() => setActiveTab('followups')}
+            >
+              Follow-ups
+            </button>
           </div>
-
+ 
           {activeTab === 'personalInfo' && (
             <div className="patient-details-content">
               <div className="patient-details-section">
@@ -1164,6 +1249,29 @@ const PhysicianQuestionnaire = () => {
             </div>
             </form>
           )}
+
+          {activeTab === 'followups' && (
+            <div className="followups-content">
+              <h3>Follow-up Messages</h3>
+              <button onClick={() => setShowFollowupPopup(true)} className="add-followup-button">
+                Add Follow-up
+              </button>
+              <div className="followup-list">
+                {followupMessages.length > 0 ? (
+                  followupMessages.map(msg => (
+                    <div key={msg.id} className="followup-item">
+                      <p className="followup-message">{msg.message}</p>
+                      <p className="followup-meta">
+                        On {new Date(msg.created_at).toLocaleString()}
+                      </p>
+                    </div>
+                  ))
+                ) : (
+                  <p>No follow-up messages for this questionnaire yet.</p>
+                )}
+              </div>
+            </div>
+          )}
           
           {activePhotoPopup && (
             <FileUploadPopup
@@ -1172,6 +1280,34 @@ const PhysicianQuestionnaire = () => {
               onFileSelect={handlePhotoSelect}
               site={activePhotoPopup}
             />
+          )}
+
+          {showFollowupPopup && (
+            <div className="popup-overlay">
+              <div className="popup-container">
+                <div className="popup-header">
+                  <h3>Add Follow-up Message</h3>
+                  <button className="close-button" onClick={() => setShowFollowupPopup(false)}>×</button>
+                </div>
+                <form onSubmit={handleFollowupSubmit} className="popup-content">
+                  <textarea
+                    value={newFollowupMessage}
+                    onChange={(e) => setNewFollowupMessage(e.target.value)}
+                    placeholder="Enter your follow-up note here..."
+                    rows="5"
+                    style={{ width: '100%', padding: '10px', boxSizing: 'border-box' }}
+                  />
+                  <div className="popup-footer">
+                    <button type="submit" className="confirm-button" disabled={isLoading}>
+                      {isLoading ? 'Submitting...' : 'Submit'}
+                    </button>
+                    <button type="button" className="cancel-button" onClick={() => setShowFollowupPopup(false)}>
+                      Cancel
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
           )}
         </div>
       )}
