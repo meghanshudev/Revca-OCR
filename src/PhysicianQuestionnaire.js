@@ -57,6 +57,77 @@ const comorbiditiesOptions = {
   ]
 };
 
+const isToday = (someDate) => {
+  const today = new Date();
+  const date = new Date(someDate);
+  return date.getDate() === today.getDate() &&
+    date.getMonth() === today.getMonth() &&
+    date.getFullYear() === today.getFullYear();
+};
+
+const initialPrescriptionState = {
+  patient_questionnaire_id: 0,
+  // Comorbidities fields
+  obesity: false,
+  malnutrition: false,
+  dyslipidemia: false,
+  diabetes_mellitus_type_1: false,
+  diabetes_mellitus_type_2: false,
+  hypothyroidism: false,
+  hyperthyroidism: false,
+  other_general_metabolic: false,
+  hypertension: false,
+  coronary_artery_disease: false,
+  congestive_heart_failure: false,
+  cardiac_arrhythmia: false,
+  peripheral_vascular_disease: false,
+  other_cardiovascular: false,
+  prior_stroke_transient_ischemic_attack_tia: false,
+  dementia_cognitive_impairment: false,
+  chronic_obstructive_pulmonary_disease_copd: false,
+  asthma: false,
+  other_respiratory: false,
+  chronic_liver_disease_cirrhosis: false,
+  peptic_ulcer_disease: false,
+  gastroesophageal_reflux_disease_gerd: false,
+  chronic_kidney_disease: false,
+  other_gi_hepatic_renal: false,
+  immunosuppression: false,
+  autoimmune_disease: false,
+  aneamia_or_chronic_hematologic_disorder: false,
+  psychiatric_illness: false,
+  prior_cancer_other_than_oral_cavity: false,
+  
+  oropharyngeal_lesion_information: '',
+  laterality: '',
+  size: '',
+  clinical_examination_findings: '',
+  staging: '',
+  histological_type: '',
+  grade: '',
+  molecular_genetic_analysis: false,
+  unique_identifier: '',
+  images: [],
+  primary_treatment_modality: '',
+  disease_status_at_follow_up: '',
+  time_period_months: ''
+};
+
+const photoSites = [
+    { key: "Upper Lip", label: 'Upper Lip' },
+    { key: "Lower Lip", label: 'Lower Lip' },
+    { key: "Left Cheeks (Inside)", label: 'Left Cheeks (Inside)' },
+    { key: "Right Cheeks (Inside)", label: 'Right Cheeks (Inside)' },
+    { key: "Tongue Top", label: 'Tongue Top' },
+    { key: "Tongue Back", label: 'Tongue Back' },
+    { key: "Left Side Tongue", label: 'Left Side Tongue' },
+    { key: "Right Side Tongue", label: 'Right Side Tongue' },
+    { key: "Roof of Mouth", label: 'Roof of Mouth' },
+    { key: "Bottom of Mouth", label: 'Bottom of Mouth' },
+    { key: "Gums", label: 'Gums' },
+    { key: "Back of Throat", label: 'Back of Throat' }
+  ];
+
 const PhysicianQuestionnaire = () => {
   const [patients, setPatients] = useState([]);
   const [patientIdSearch, setPatientIdSearch] = useState('');
@@ -65,58 +136,17 @@ const PhysicianQuestionnaire = () => {
   const [selectedPatient, setSelectedPatient] = useState(null);
   const [showPrescriptionForm, setShowPrescriptionForm] = useState(false);
   const [searchError, setSearchError] = useState('');
-  const [prescriptionData, setPrescriptionData] = useState({
-    patient_questionnaire_id: 0,
-    // Comorbidities fields
-    obesity: false,
-    malnutrition: false,
-    dyslipidemia: false,
-    diabetes_mellitus_type_1: false,
-    diabetes_mellitus_type_2: false,
-    hypothyroidism: false,
-    hyperthyroidism: false,
-    other_general_metabolic: false,
-    hypertension: false,
-    coronary_artery_disease: false,
-    congestive_heart_failure: false,
-    cardiac_arrhythmia: false,
-    peripheral_vascular_disease: false,
-    other_cardiovascular: false,
-    prior_stroke_transient_ischemic_attack_tia: false,
-    dementia_cognitive_impairment: false,
-    chronic_obstructive_pulmonary_disease_copd: false,
-    asthma: false,
-    other_respiratory: false,
-    chronic_liver_disease_cirrhosis: false,
-    peptic_ulcer_disease: false,
-    gastroesophageal_reflux_disease_gerd: false,
-    chronic_kidney_disease: false,
-    other_gi_hepatic_renal: false,
-    immunosuppression: false,
-    autoimmune_disease: false,
-    aneamia_or_chronic_hematologic_disorder: false,
-    psychiatric_illness: false,
-    prior_cancer_other_than_oral_cavity: false,
-    
-    oropharyngeal_lesion_information: '',
-    laterality: '',
-    size: '',
-    clinical_examination_findings: '',
-    staging: '',
-    histological_type: '',
-    grade: '',
-    molecular_genetic_analysis: false,
-    unique_identifier: '',
-    images: [],
-    primary_treatment_modality: '',
-    disease_status_at_follow_up: '',
-    time_period_months: ''
-  });
+  const [prescriptionData, setPrescriptionData] = useState(initialPrescriptionState);
+  const [editingQuestionnaireId, setEditingQuestionnaireId] = useState(null);
   
   const [activePhotoPopup, setActivePhotoPopup] = useState(null);
   const [uploadedPhotos, setUploadedPhotos] = useState({});
   const [imageIds, setImageIds] = useState({});
   const [selectedFollowUp, setSelectedFollowUp] = useState(null);
+  const [activeTab, setActiveTab] = useState('personalInfo');
+  const [imageViewerOpen, setImageViewerOpen] = useState(false);
+  const [currentImage, setCurrentImage] = useState(null);
+  const [loadingImageId, setLoadingImageId] = useState(null);
 
   const navigate = useNavigate();
   const location = useLocation();
@@ -177,7 +207,48 @@ const PhysicianQuestionnaire = () => {
       if (response.ok) {
         const data = await response.json();
         setSelectedPatient(data);
-        setShowPrescriptionForm(false);
+
+        const todaysQuestionnaire = data.physician_questionnaires?.find(q => isToday(q.created_at));
+        
+        const imageIds = {};
+        const uploadedPhotos = {};
+
+        // First, populate with the patient's own images
+        data.images?.forEach(img => {
+          if (img.tag) {
+            imageIds[img.tag] = img.id;
+            uploadedPhotos[img.tag] = true;
+          }
+        });
+
+        if (todaysQuestionnaire) {
+          // Then, merge images from today's questionnaire, overwriting if necessary
+          todaysQuestionnaire.images?.forEach(img => {
+            if (img.tag) {
+              imageIds[img.tag] = img.id;
+              uploadedPhotos[img.tag] = true;
+            }
+          });
+
+          setPrescriptionData({
+            ...initialPrescriptionState,
+            ...todaysQuestionnaire,
+            patient_questionnaire_id: data.id
+          });
+          setEditingQuestionnaireId(todaysQuestionnaire.id);
+        } else {
+          setPrescriptionData({
+            ...initialPrescriptionState,
+            patient_questionnaire_id: data.id
+          });
+          setEditingQuestionnaireId(null);
+        }
+        
+        setImageIds(imageIds);
+        setUploadedPhotos(uploadedPhotos);
+
+        setShowPrescriptionForm(true); // Show tabs immediately
+        setActiveTab('personalInfo'); // Default to personal info
       } else {
         console.error('Failed to fetch patient details');
       }
@@ -210,8 +281,49 @@ const PhysicianQuestionnaire = () => {
       if (response.ok) {
         const data = await response.json();
         setSelectedPatient(data);
+
+        const todaysQuestionnaire = data.physician_questionnaires?.find(q => isToday(q.created_at));
+
+        const imageIds = {};
+        const uploadedPhotos = {};
+
+        // First, populate with the patient's own images
+        data.images?.forEach(img => {
+          if (img.tag) {
+            imageIds[img.tag] = img.id;
+            uploadedPhotos[img.tag] = true;
+          }
+        });
+
+        if (todaysQuestionnaire) {
+          // Then, merge images from today's questionnaire, overwriting if necessary
+          todaysQuestionnaire.images?.forEach(img => {
+            if (img.tag) {
+              imageIds[img.tag] = img.id;
+              uploadedPhotos[img.tag] = true;
+            }
+          });
+
+          setPrescriptionData({
+            ...initialPrescriptionState,
+            ...todaysQuestionnaire,
+            patient_questionnaire_id: data.id
+          });
+          setEditingQuestionnaireId(todaysQuestionnaire.id);
+        } else {
+          setPrescriptionData({
+            ...initialPrescriptionState,
+            patient_questionnaire_id: data.id
+          });
+          setEditingQuestionnaireId(null);
+        }
+
+        setImageIds(imageIds);
+        setUploadedPhotos(uploadedPhotos);
+
         setShowPatientList(false);
-        setShowPrescriptionForm(false);
+        setShowPrescriptionForm(true);
+        setActiveTab('personalInfo');
       } else {
         if (response.status === 404) {
           setSearchError(`No patient found with ID: ${patientIdSearch}`);
@@ -234,14 +346,7 @@ const PhysicianQuestionnaire = () => {
   
   const handleBackToPatientDetails = () => {
     setShowPrescriptionForm(false);
-  };
-  
-  const handleAddPrescription = () => {
-    setShowPrescriptionForm(true);
-    setPrescriptionData({
-      ...prescriptionData,
-      patient_questionnaire_id: selectedPatient.id
-    });
+    setSelectedPatient(null); // Go back to the list
   };
   
   const handlePrescriptionChange = (e) => {
@@ -299,91 +404,122 @@ const PhysicianQuestionnaire = () => {
   const handlePrescriptionSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
-    
-    // Convert size to number if it's a string
-    const dataToSend = {
-      ...prescriptionData,
-      size: prescriptionData.size ? Number(prescriptionData.size) : 0,
-      time_period_months: prescriptionData.time_period_months ? Number(prescriptionData.time_period_months) : null,
-      images: Object.values(imageIds)
-    };
-    
+
     const token = localStorage.getItem('token');
+    const patientPhotoKeys = photoSites.map(site => site.key);
+    
+    const patientImageIds = [];
+    const physicianImageIds = [];
+
+    for (const key in imageIds) {
+      if (patientPhotoKeys.includes(key)) {
+        patientImageIds.push(imageIds[key]);
+      } else {
+        physicianImageIds.push(imageIds[key]);
+      }
+    }
+
     try {
-      const response = await fetch(`${API_BASE_URL}/api/v1/physician_questionnaire/`, {
-        method: 'POST',
+      // API Call 1: Update patient's images
+      const patientUpdateResponse = await fetch(`${API_BASE_URL}/api/v1/patient_questionnaire/${selectedPatient.id}/`, {
+        method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Token ${token}`,
         },
-        body: JSON.stringify(dataToSend),
+        body: JSON.stringify({ images: patientImageIds }),
       });
-      
-      if (response.ok) {
-        alert('Prescription added successfully!');
-        setShowPrescriptionForm(false);
-        // Reset form data
-        setPrescriptionData({
-          patient_questionnaire_id: 0,
-          obesity: false,
-          malnutrition: false,
-          dyslipidemia: false,
-          diabetes_mellitus_type_1: false,
-          diabetes_mellitus_type_2: false,
-          hypothyroidism: false,
-          hyperthyroidism: false,
-          other_general_metabolic: false,
-          hypertension: false,
-          coronary_artery_disease: false,
-          congestive_heart_failure: false,
-          cardiac_arrhythmia: false,
-          peripheral_vascular_disease: false,
-          other_cardiovascular: false,
-          prior_stroke_transient_ischemic_attack_tia: false,
-          dementia_cognitive_impairment: false,
-          chronic_obstructive_pulmonary_disease_copd: false,
-          asthma: false,
-          other_respiratory: false,
-          chronic_liver_disease_cirrhosis: false,
-          peptic_ulcer_disease: false,
-          gastroesophageal_reflux_disease_gerd: false,
-          chronic_kidney_disease: false,
-          other_gi_hepatic_renal: false,
-          immunosuppression: false,
-          autoimmune_disease: false,
-          aneamia_or_chronic_hematologic_disorder: false,
-          psychiatric_illness: false,
-          prior_cancer_other_than_oral_cavity: false,
-          oropharyngeal_lesion_information: '',
-          laterality: '',
-          size: '',
-          clinical_examination_findings: '',
-          staging: '',
-          histological_type: '',
-          grade: '',
-          molecular_genetic_analysis: false,
-          unique_identifier: '',
-          images: [],
-          primary_treatment_modality: '',
-          disease_status_at_follow_up: '',
-          time_period_months: ''
-        });
-        setUploadedPhotos({});
-        setImageIds({});
-        
-        // Refresh data to show the new follow-up
-        await fetchPatients(true);
-      } else {
-        const errorData = await response.json();
-        console.error('Failed to add prescription:', errorData);
-        alert(`Failed to add prescription: ${JSON.stringify(errorData)}`);
+
+      if (!patientUpdateResponse.ok) {
+        const errorData = await patientUpdateResponse.json();
+        throw new Error(`Failed to update patient images: ${JSON.stringify(errorData)}`);
       }
+
+      // API Call 2: Submit physician questionnaire
+      const physicianDataToSend = {
+        ...prescriptionData,
+        size: prescriptionData.size ? Number(prescriptionData.size) : 0,
+        time_period_months: prescriptionData.time_period_months ? Number(prescriptionData.time_period_months) : null,
+        images: physicianImageIds,
+      };
+
+      const isUpdate = !!editingQuestionnaireId;
+      const url = isUpdate
+        ? `${API_BASE_URL}/api/v1/physician_questionnaire/${editingQuestionnaireId}/`
+        : `${API_BASE_URL}/api/v1/physician_questionnaire/`;
+      const method = isUpdate ? 'PUT' : 'POST';
+
+      const physicianResponse = await fetch(url, {
+        method: method,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Token ${token}`,
+        },
+        body: JSON.stringify(physicianDataToSend),
+      });
+
+      if (!physicianResponse.ok) {
+        const errorData = await physicianResponse.json();
+        throw new Error(`Failed to ${isUpdate ? 'update' : 'add'} prescription: ${JSON.stringify(errorData)}`);
+      }
+
+      alert(`Prescription ${isUpdate ? 'updated' : 'added'} successfully!`);
+      setUploadedPhotos({});
+      setImageIds({});
+      await handlePatientClick(selectedPatient);
+
     } catch (error) {
-      console.error('Error adding prescription:', error);
-      alert('An error occurred while adding the prescription');
+      console.error('Error during submission:', error);
+      alert(`An error occurred: ${error.message}`);
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const fetchAndViewImage = async (imageId, tag) => {
+    setLoadingImageId(imageId);
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/v1/image/${imageId}`);
+      if (response.ok) {
+        const imageBlob = await response.blob();
+        const imageUrl = URL.createObjectURL(imageBlob);
+        setCurrentImage({ url: imageUrl, tag: tag });
+        setImageViewerOpen(true);
+      } else {
+        console.error('Failed to fetch image');
+        alert('Failed to load image.');
+      }
+    } catch (error) {
+      console.error('Error fetching image:', error);
+      alert('An error occurred while fetching the image.');
+    } finally {
+      setLoadingImageId(null);
+    }
+  };
+
+  const closeImageViewer = () => {
+    setImageViewerOpen(false);
+    if (currentImage && currentImage.url) {
+      URL.revokeObjectURL(currentImage.url);
+    }
+    setCurrentImage(null);
+  };
+
+  const ImageViewer = () => {
+    if (!imageViewerOpen || !currentImage) return null;
+    return (
+      <div className="popup-overlay">
+        <div className="popup-container image-viewer-container">
+          <div className="popup-header">
+            <h3>{currentImage.tag}</h3>
+            <button className="close-button" onClick={closeImageViewer}>×</button>
+          </div>
+          <div className="popup-content">
+            <img src={currentImage.url} alt={currentImage.tag} className="image-preview" />
+          </div>
+        </div>
+      </div>
+    );
   };
 
   const formatBoolean = (value) => {
@@ -413,6 +549,42 @@ const PhysicianQuestionnaire = () => {
     const index = Math.abs(hash % colors.length);
     return colors[index];
   };
+
+  const renderPatientInformation = () => (
+    <div className="patient-details-section">
+      <h3>Personal Information</h3>
+      <div className="details-grid">
+        <div className="detail-item">
+          <span className="detail-label">ID:</span>
+          <span className="detail-value">{selectedPatient.patient_identification_number || 'Not provided'}</span>
+        </div>
+        <div className="detail-item">
+          <span className="detail-label">Age:</span>
+          <span className="detail-value">{selectedPatient.age || 'Not provided'}</span>
+        </div>
+        <div className="detail-item">
+          <span className="detail-label">Gender:</span>
+          <span className="detail-value">
+            {selectedPatient.gender ?
+              selectedPatient.gender.charAt(0).toUpperCase() + selectedPatient.gender.slice(1) :
+              'Not provided'}
+          </span>
+        </div>
+        <div className="detail-item">
+          <span className="detail-label">Ethnicity:</span>
+          <span className="detail-value">{selectedPatient.ethnicity || 'Not provided'}</span>
+        </div>
+        <div className="detail-item">
+          <span className="detail-label">Education:</span>
+          <span className="detail-value">{selectedPatient.education_level || 'Not provided'}</span>
+        </div>
+        <div className="detail-item">
+          <span className="detail-label">Occupation:</span>
+          <span className="detail-value">{selectedPatient.occupation || 'Not provided'}</span>
+        </div>
+      </div>
+    </div>
+  );
 
   return (
     <div className="questionnaire-container">
@@ -479,279 +651,278 @@ const PhysicianQuestionnaire = () => {
         </div>
       )}
       
-      {selectedPatient && !showPrescriptionForm && (
-        <div className="patient-details-container">
+      {selectedPatient && showPrescriptionForm && (
+        <div className="prescription-form-container">
           <div className="patient-details-header">
             <button className="back-button" onClick={handleBackToList}>
               ← Back to Patient List
             </button>
-            <h2>Patient Details</h2>
+            <h2>Patient: {selectedPatient.email}</h2>
           </div>
-          
-          <div className="patient-details-content">
-            <div className="patient-profile-large">
-              <div 
-                className="patient-avatar-large"
-                style={{ backgroundColor: getRandomColor(selectedPatient.email) }}
-              >
-                {getInitial(selectedPatient.email)}
-              </div>
-              <div className="patient-email-large">{selectedPatient.email}</div>
-              <button className="add-prescription-button" onClick={handleAddPrescription}>
-                Add Today's Prescription
-              </button>
-            </div>
-            
-            <div className="patient-details-section">
-              <h3>Personal Information</h3>
-              <div className="details-grid">
-                <div className="detail-item">
-                  <span className="detail-label">ID:</span>
-                  <span className="detail-value">{selectedPatient.patient_identification_number || 'Not provided'}</span>
-                </div>
-                <div className="detail-item">
-                  <span className="detail-label">Age:</span>
-                  <span className="detail-value">{selectedPatient.age || 'Not provided'}</span>
-                </div>
-                <div className="detail-item">
-                  <span className="detail-label">Gender:</span>
-                  <span className="detail-value">
-                    {selectedPatient.gender ? 
-                      selectedPatient.gender.charAt(0).toUpperCase() + selectedPatient.gender.slice(1) : 
-                      'Not provided'}
-                  </span>
-                </div>
-                <div className="detail-item">
-                  <span className="detail-label">Ethnicity:</span>
-                  <span className="detail-value">{selectedPatient.ethnicity || 'Not provided'}</span>
-                </div>
-                <div className="detail-item">
-                  <span className="detail-label">Education:</span>
-                  <span className="detail-value">{selectedPatient.education_level || 'Not provided'}</span>
-                </div>
-                <div className="detail-item">
-                  <span className="detail-label">Occupation:</span>
-                  <span className="detail-value">{selectedPatient.occupation || 'Not provided'}</span>
-                </div>
-              </div>
-            </div>
-            
-            <div className="patient-details-section">
-              <h3>Health Awareness</h3>
-              <div className="details-grid">
-                <div className="detail-item">
-                  <span className="detail-label">Cancer Awareness:</span>
-                  <span className="detail-value">{formatBoolean(selectedPatient.cancer_awareness)}</span>
-                </div>
-                <div className="detail-item">
-                  <span className="detail-label">Family History:</span>
-                  <span className="detail-value">{formatBoolean(selectedPatient.family_history)}</span>
-                </div>
-              </div>
-            </div>
-            
-            <div className="patient-details-section">
-              <h3>Lifestyle Habits</h3>
-              <div className="details-grid">
-                <div className="detail-item">
-                  <span className="detail-label">Smoking Status:</span>
-                  <span className="detail-value">{selectedPatient.smoking_status || 'Not provided'}</span>
-                </div>
-                {selectedPatient.smoking_status && selectedPatient.smoking_status !== 'never' && (
-                  <>
-                    <div className="detail-item">
-                      <span className="detail-label">Years of Smoking:</span>
-                      <span className="detail-value">{selectedPatient.smoking_years || 'Not provided'}</span>
-                    </div>
-                    <div className="detail-item">
-                      <span className="detail-label">Packs per Day:</span>
-                      <span className="detail-value">{selectedPatient.packs_per_day || 'Not provided'}</span>
-                    </div>
-                    {selectedPatient.smoking_status === 'ex-smoker' && (
-                      <div className="detail-item">
-                        <span className="detail-label">Years Since Stopping:</span>
-                        <span className="detail-value">{selectedPatient.years_since_stopping || 'Not provided'}</span>
-                      </div>
-                    )}
-                  </>
-                )}
-                <div className="detail-item">
-                  <span className="detail-label">Alcohol Consumption:</span>
-                  <span className="detail-value">{selectedPatient.alcohol_consumption || 'Not provided'}</span>
-                </div>
-              </div>
-            </div>
-            
-            <div className="patient-details-section">
-              <h3>Oral Habits</h3>
-              <div className="details-grid">
-                {selectedPatient.tobacco_chewing_frequency && (
-                  <div className="detail-item">
-                    <span className="detail-label">Tobacco Chewing:</span>
-                    <span className="detail-value">
-                      {`${selectedPatient.tobacco_chewing_frequency} (${selectedPatient.tobacco_chewing_duration || 'duration not specified'})`}
-                    </span>
-                  </div>
-                )}
-                {selectedPatient.betel_nut_chewing_frequency && (
-                  <div className="detail-item">
-                    <span className="detail-label">Betel Nut Chewing:</span>
-                    <span className="detail-value">
-                      {`${selectedPatient.betel_nut_chewing_frequency} (${selectedPatient.betel_nut_chewing_duration || 'duration not specified'})`}
-                    </span>
-                  </div>
-                )}
-                {selectedPatient.gutkha_chewing_frequency && (
-                  <div className="detail-item">
-                    <span className="detail-label">Gutkha Chewing:</span>
-                    <span className="detail-value">
-                      {`${selectedPatient.gutkha_chewing_frequency} (${selectedPatient.gutkha_chewing_duration || 'duration not specified'})`}
-                    </span>
-                  </div>
-                )}
-                {selectedPatient.betel_quid_chewing_frequency && (
-                  <div className="detail-item">
-                    <span className="detail-label">Betel Quid Chewing:</span>
-                    <span className="detail-value">
-                      {`${selectedPatient.betel_quid_chewing_frequency} (${selectedPatient.betel_quid_chewing_duration || 'duration not specified'})`}
-                    </span>
-                  </div>
-                )}
-                {selectedPatient.mishri_use_frequency && (
-                  <div className="detail-item">
-                    <span className="detail-label">Mishri Use:</span>
-                    <span className="detail-value">
-                      {`${selectedPatient.mishri_use_frequency} (${selectedPatient.mishri_use_duration || 'duration not specified'})`}
-                    </span>
-                  </div>
-                )}
-              </div>
-            </div>
-            
-            <div className="patient-details-section">
-              <h3>Symptoms</h3>
-              <div className="details-grid">
-                <div className="detail-item">
-                  <span className="detail-label">Lumps/Ulcers:</span>
-                  <span className="detail-value">{formatBoolean(selectedPatient.symptoms_lumps)}</span>
-                </div>
-                <div className="detail-item">
-                  <span className="detail-label">Soreness/Pain:</span>
-                  <span className="detail-value">{formatBoolean(selectedPatient.symptoms_soreness)}</span>
-                </div>
-                <div className="detail-item">
-                  <span className="detail-label">Pain Swallowing:</span>
-                  <span className="detail-value">{formatBoolean(selectedPatient.symptoms_pain_swallowing)}</span>
-                </div>
-                <div className="detail-item">
-                  <span className="detail-label">Difficulty Swallowing:</span>
-                  <span className="detail-value">{formatBoolean(selectedPatient.symptoms_difficulty_swallowing)}</span>
-                </div>
-                <div className="detail-item">
-                  <span className="detail-label">Difficulty Moving Tongue:</span>
-                  <span className="detail-value">{formatBoolean(selectedPatient.symptoms_difficulty_tongue)}</span>
-                </div>
-                <div className="detail-item">
-                  <span className="detail-label">Difficulty Opening Jaw:</span>
-                  <span className="detail-value">{formatBoolean(selectedPatient.symptoms_difficulty_jaw)}</span>
-                </div>
-                <div className="detail-item">
-                  <span className="detail-label">White Patches:</span>
-                  <span className="detail-value">{formatBoolean(selectedPatient.symptoms_white_patches)}</span>
-                </div>
-                <div className="detail-item">
-                  <span className="detail-label">Duration of Symptoms:</span>
-                  <span className="detail-value">{selectedPatient.symptoms_duration || 'Not provided'}</span>
-                </div>
-              </div>
-            </div>
 
-            <div className="patient-details-section">
-              <h3>Physician Follow-ups</h3>
-              {selectedPatient.physician_questionnaires && selectedPatient.physician_questionnaires.length > 0 ? (
-                <div className="follow-ups-container">
-                  {selectedPatient.physician_questionnaires.map((followup, index) => (
-                    <div
-                      key={followup.id || index}
-                      className="follow-up-card compact"
-                      onClick={() => handleFollowUpClick(followup)}
-                      style={{
-                        backgroundColor: '#f9f9f9',
-                        padding: '15px',
-                        borderRadius: '8px',
-                        marginBottom: '10px',
-                        border: '1px solid #e0e0e0',
-                        cursor: 'pointer',
-                        transition: 'all 0.2s ease'
-                      }}
-                    >
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <h4 style={{ margin: 0 }}>Follow-up #{index + 1}</h4>
-                        <span style={{ fontSize: '0.9em', color: '#666' }}>
-                          {followup.created_at ? new Date(followup.created_at).toLocaleString() : 'Date not available'}
-                        </span>
+          <div className="tab-switcher">
+            <button
+              className={`tab-button ${activeTab === 'personalInfo' ? 'active' : ''}`}
+              onClick={() => setActiveTab('personalInfo')}
+            >
+              Personal Information
+            </button>
+            <button
+              className={`tab-button ${activeTab === 'questionnaire' ? 'active' : ''}`}
+              onClick={() => setActiveTab('questionnaire')}
+            >
+              Questionnaire
+            </button>
+          </div>
+
+          {activeTab === 'personalInfo' && (
+            <div className="patient-details-content">
+              <div className="patient-details-section">
+                <h3>Personal Information</h3>
+                <div className="details-grid">
+                  <div className="detail-item">
+                    <span className="detail-label">ID:</span>
+                    <span className="detail-value">{selectedPatient.patient_identification_number || 'Not provided'}</span>
+                  </div>
+                  <div className="detail-item">
+                    <span className="detail-label">Age:</span>
+                    <span className="detail-value">{selectedPatient.age || 'Not provided'}</span>
+                  </div>
+                  <div className="detail-item">
+                    <span className="detail-label">Gender:</span>
+                    <span className="detail-value">
+                      {selectedPatient.gender ?
+                        selectedPatient.gender.charAt(0).toUpperCase() + selectedPatient.gender.slice(1) :
+                        'Not provided'}
+                    </span>
+                  </div>
+                  <div className="detail-item">
+                    <span className="detail-label">Ethnicity:</span>
+                    <span className="detail-value">{selectedPatient.ethnicity || 'Not provided'}</span>
+                  </div>
+                  <div className="detail-item">
+                    <span className="detail-label">Education:</span>
+                    <span className="detail-value">{selectedPatient.education_level || 'Not provided'}</span>
+                  </div>
+                  <div className="detail-item">
+                    <span className="detail-label">Occupation:</span>
+                    <span className="detail-value">{selectedPatient.occupation || 'Not provided'}</span>
+                  </div>
+                </div>
+              </div>
+              <div className="patient-details-section">
+                <h3>Health Awareness</h3>
+                <div className="details-grid">
+                  <div className="detail-item">
+                    <span className="detail-label">Cancer Awareness:</span>
+                    <span className="detail-value">{formatBoolean(selectedPatient.cancer_awareness)}</span>
+                  </div>
+                  <div className="detail-item">
+                    <span className="detail-label">Family History:</span>
+                    <span className="detail-value">{formatBoolean(selectedPatient.family_history)}</span>
+                  </div>
+                </div>
+              </div>
+              <div className="patient-details-section">
+                <h3>Lifestyle Habits</h3>
+                <div className="details-grid">
+                  <div className="detail-item">
+                    <span className="detail-label">Smoking Status:</span>
+                    <span className="detail-value">{selectedPatient.smoking_status || 'Not provided'}</span>
+                  </div>
+                  {selectedPatient.smoking_status && selectedPatient.smoking_status !== 'never' && (
+                    <>
+                      <div className="detail-item">
+                        <span className="detail-label">Years of Smoking:</span>
+                        <span className="detail-value">{selectedPatient.smoking_years || 'Not provided'}</span>
+                      </div>
+                      <div className="detail-item">
+                        <span className="detail-label">Packs per Day:</span>
+                        <span className="detail-value">{selectedPatient.packs_per_day || 'Not provided'}</span>
+                      </div>
+                      {selectedPatient.smoking_status === 'ex-smoker' && (
+                        <div className="detail-item">
+                          <span className="detail-label">Years Since Stopping:</span>
+                          <span className="detail-value">{selectedPatient.years_since_stopping || 'Not provided'}</span>
+                        </div>
+                      )}
+                    </>
+                  )}
+                  <div className="detail-item">
+                    <span className="detail-label">Alcohol Consumption:</span>
+                    <span className="detail-value">{selectedPatient.alcohol_consumption || 'Not provided'}</span>
+                  </div>
+                </div>
+              </div>
+              <div className="patient-details-section">
+                <h3>Oral Habits</h3>
+                <div className="details-grid">
+                  {selectedPatient.tobacco_chewing_frequency && (
+                    <div className="detail-item">
+                      <span className="detail-label">Tobacco Chewing:</span>
+                      <span className="detail-value">
+                        {`${selectedPatient.tobacco_chewing_frequency} (${selectedPatient.tobacco_chewing_duration || 'duration not specified'})`}
+                      </span>
+                    </div>
+                  )}
+                  {selectedPatient.betel_nut_chewing_frequency && (
+                    <div className="detail-item">
+                      <span className="detail-label">Betel Nut Chewing:</span>
+                      <span className="detail-value">
+                        {`${selectedPatient.betel_nut_chewing_frequency} (${selectedPatient.betel_nut_chewing_duration || 'duration not specified'})`}
+                      </span>
+                    </div>
+                  )}
+                  {selectedPatient.gutkha_chewing_frequency && (
+                    <div className="detail-item">
+                      <span className="detail-label">Gutkha Chewing:</span>
+                      <span className="detail-value">
+                        {`${selectedPatient.gutkha_chewing_frequency} (${selectedPatient.gutkha_chewing_duration || 'duration not specified'})`}
+                      </span>
+                    </div>
+                  )}
+                  {selectedPatient.betel_quid_chewing_frequency && (
+                    <div className="detail-item">
+                      <span className="detail-label">Betel Quid Chewing:</span>
+                      <span className="detail-value">
+                        {`${selectedPatient.betel_quid_chewing_frequency} (${selectedPatient.betel_quid_chewing_duration || 'duration not specified'})`}
+                      </span>
+                    </div>
+                  )}
+                  {selectedPatient.mishri_use_frequency && (
+                    <div className="detail-item">
+                      <span className="detail-label">Mishri Use:</span>
+                      <span className="detail-value">
+                        {`${selectedPatient.mishri_use_frequency} (${selectedPatient.mishri_use_duration || 'duration not specified'})`}
+                      </span>
+                    </div>
+                  )}
+                </div>
+              </div>
+              <div className="patient-details-section">
+                <h3>Symptoms</h3>
+                <div className="details-grid">
+                  <div className="detail-item">
+                    <span className="detail-label">Lumps/Ulcers:</span>
+                    <span className="detail-value">{formatBoolean(selectedPatient.symptoms_lumps)}</span>
+                  </div>
+                  <div className="detail-item">
+                    <span className="detail-label">Soreness/Pain:</span>
+                    <span className="detail-value">{formatBoolean(selectedPatient.symptoms_soreness)}</span>
+                  </div>
+                  <div className="detail-item">
+                    <span className="detail-label">Pain Swallowing:</span>
+                    <span className="detail-value">{formatBoolean(selectedPatient.symptoms_pain_swallowing)}</span>
+                  </div>
+                  <div className="detail-item">
+                    <span className="detail-label">Difficulty Swallowing:</span>
+                    <span className="detail-value">{formatBoolean(selectedPatient.symptoms_difficulty_swallowing)}</span>
+                  </div>
+                  <div className="detail-item">
+                    <span className="detail-label">Difficulty Moving Tongue:</span>
+                    <span className="detail-value">{formatBoolean(selectedPatient.symptoms_difficulty_tongue)}</span>
+                  </div>
+                  <div className="detail-item">
+                    <span className="detail-label">Difficulty Opening Jaw:</span>
+                    <span className="detail-value">{formatBoolean(selectedPatient.symptoms_difficulty_jaw)}</span>
+                  </div>
+                  <div className="detail-item">
+                    <span className="detail-label">White Patches:</span>
+                    <span className="detail-value">{formatBoolean(selectedPatient.symptoms_white_patches)}</span>
+                  </div>
+                  <div className="detail-item">
+                    <span className="detail-label">Duration of Symptoms:</span>
+                    <span className="detail-value">{selectedPatient.symptoms_duration || 'Not provided'}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'questionnaire' && (
+            <form onSubmit={handlePrescriptionSubmit} className="prescription-form" style={{ opacity: isLoading ? 0.7 : 1, pointerEvents: isLoading ? 'none' : 'auto' }}>
+              <div className="form-group">
+                <label>Comorbidities:</label>
+                {Object.entries(comorbiditiesOptions).map(([category, options]) => (
+                  <div key={category} className="comorbidity-category" style={{ marginBottom: '15px' }}>
+                    <strong style={{ display: 'block', marginBottom: '5px', color: '#2c3e50' }}>{category}</strong>
+                    <div className="checkbox-grid">
+                      {options.map(option => (
+                        <label key={option.name} className="checkbox-label">
+                          <input
+                            type="checkbox"
+                            name={option.name}
+                            checked={prescriptionData[option.name]}
+                            onChange={handlePrescriptionChange}
+                          />
+                          {option.label}
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <div className="form-group">
+                <label>Patient Photographs:</label>
+                <div className="multi-input-group">
+                  {photoSites.map(site => (
+                    <div key={site.key} className="file-input-container">
+                      <label>{site.label}:</label>
+                      <div className="button-group">
+                        {uploadedPhotos[site.key] && imageIds[site.key] && (
+                          <button
+                            type="button"
+                            className="file-view-button"
+                            onClick={() => fetchAndViewImage(imageIds[site.key], site.key)}
+                            disabled={loadingImageId === imageIds[site.key]}
+                          >
+                            {loadingImageId === imageIds[site.key] ? 'Loading...' : 'View'}
+                          </button>
+                        )}
+                        <button
+                          type="button"
+                          className="file-upload-button"
+                          onClick={() => openPhotoPopup(site.key)}
+                        >
+                          {uploadedPhotos[site.key] ? 'Change Photo' : 'Add Photo'}
+                        </button>
                       </div>
                     </div>
                   ))}
                 </div>
-              ) : (
-                <p className="no-data-message">No follow-up records found.</p>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
-      
-      {selectedPatient && showPrescriptionForm && (
-        <div className="prescription-form-container">
-          <div className="patient-details-header">
-            <button className="back-button" onClick={handleBackToPatientDetails}>
-              ← Back to Patient Details
-            </button>
-            <h2>Add Prescription for {selectedPatient.email}</h2>
-          </div>
-          
-          <form onSubmit={handlePrescriptionSubmit} className="prescription-form">
-            <div className="form-group">
-              <label>Comorbidities:</label>
-              {Object.entries(comorbiditiesOptions).map(([category, options]) => (
-                <div key={category} className="comorbidity-category" style={{ marginBottom: '15px' }}>
-                  <strong style={{ display: 'block', marginBottom: '5px', color: '#2c3e50' }}>{category}</strong>
-                  <div className="checkbox-grid">
-                    {options.map(option => (
-                      <label key={option.name} className="checkbox-label">
-                        <input
-                          type="checkbox"
-                          name={option.name}
-                          checked={prescriptionData[option.name]}
-                          onChange={handlePrescriptionChange}
-                        />
-                        {option.label}
-                      </label>
-                    ))}
-                  </div>
-                </div>
-              ))}
-            </div>
+              </div>
 
-            <div className="form-group">
-              <label>Photographs (with size measuring function):</label>
+              <div className="form-group">
+              <label>Physician Photographs (with size measuring function):</label>
               <div className="multi-input-group">
                 {[1, 2, 3, 4, 5, 6].map(num => {
                   const site = `Photograph_Site_${num}`;
-                  return (
-                    <div key={site} className="file-input-container">
-                      <label>Site {num}:</label>
-                      <button
-                        type="button"
-                        className="file-upload-button"
-                        onClick={() => openPhotoPopup(site)}
-                      >
-                        {uploadedPhotos[site] ? 'Change Photo' : 'Upload Photo'}
-                      </button>
-                    </div>
-                  );
-                })}
+                 return (
+                   <div key={site} className="file-input-container">
+                     <label>Site {num}:</label>
+                     <div className="button-group">
+                       {uploadedPhotos[site] && imageIds[site] && (
+                         <button
+                           type="button"
+                           className="file-view-button"
+                           onClick={() => fetchAndViewImage(imageIds[site], site)}
+                           disabled={loadingImageId === imageIds[site]}
+                         >
+                           {loadingImageId === imageIds[site] ? 'Loading...' : 'View'}
+                         </button>
+                       )}
+                       <button
+                         type="button"
+                         className="file-upload-button"
+                         onClick={() => openPhotoPopup(site)}
+                       >
+                         {uploadedPhotos[site] ? 'Change Photo' : 'Upload Photo'}
+                       </button>
+                     </div>
+                   </div>
+                 );
+               })}
               </div>
             </div>
             
@@ -868,19 +1039,31 @@ const PhysicianQuestionnaire = () => {
               <div className="multi-input-group">
                 {[1, 2, 3, 4, 5, 6].map(num => {
                   const site = `Histopathology_Site_${num}`;
-                  return (
-                    <div key={site} className="file-input-container">
-                      <label>Site {num}:</label>
-                      <button
-                        type="button"
-                        className="file-upload-button"
-                        onClick={() => openPhotoPopup(site)}
-                      >
-                        {uploadedPhotos[site] ? 'Change Slide' : 'Upload Slide'}
-                      </button>
-                    </div>
-                  );
-                })}
+                 return (
+                   <div key={site} className="file-input-container">
+                     <label>Site {num}:</label>
+                     <div className="button-group">
+                       {uploadedPhotos[site] && imageIds[site] && (
+                         <button
+                           type="button"
+                           className="file-view-button"
+                           onClick={() => fetchAndViewImage(imageIds[site], site)}
+                           disabled={loadingImageId === imageIds[site]}
+                         >
+                           {loadingImageId === imageIds[site] ? 'Loading...' : 'View'}
+                         </button>
+                       )}
+                       <button
+                         type="button"
+                         className="file-upload-button"
+                         onClick={() => openPhotoPopup(site)}
+                       >
+                         {uploadedPhotos[site] ? 'Change Slide' : 'Upload Slide'}
+                       </button>
+                     </div>
+                   </div>
+                 );
+               })}
               </div>
             </div>
             
@@ -961,10 +1144,26 @@ const PhysicianQuestionnaire = () => {
             </div>
             
             <div className="form-actions">
-              <button type="submit" className="submit-button">Submit Prescription</button>
-              <button type="button" className="cancel-button" onClick={handleBackToPatientDetails}>Cancel</button>
+              <button type="submit" className="submit-button" disabled={isLoading}>
+                {isLoading ? (
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <div style={{
+                      border: '2px solid #f3f3f3',
+                      borderTop: '2px solid #ffffff',
+                      borderRadius: '50%',
+                      width: '16px',
+                      height: '16px',
+                      animation: 'spin 1s linear infinite',
+                      marginRight: '10px'
+                    }}></div>
+                    Submitting...
+                  </div>
+                ) : (editingQuestionnaireId ? 'Update' : 'Submit')}
+              </button>
+              <button type="button" className="cancel-button" onClick={handleBackToPatientDetails} disabled={isLoading}>Cancel</button>
             </div>
-          </form>
+            </form>
+          )}
           
           {activePhotoPopup && (
             <FileUploadPopup
@@ -1072,6 +1271,24 @@ const PhysicianQuestionnaire = () => {
                   <span className="detail-label">Time Period:</span>
                   <span className="detail-value">{selectedFollowUp.time_period_months ? `${selectedFollowUp.time_period_months} months` : 'Not specified'}</span>
                 </div>
+                <div className="detail-item full-width">
+                  <span className="detail-label">Images:</span>
+                  <div className="detail-value image-gallery">
+                    {selectedFollowUp.images && selectedFollowUp.images.length > 0 ? (
+                      selectedFollowUp.images.map(image => (
+                        <button
+                          key={image.id}
+                          type="button"
+                          className="file-view-button"
+                          onClick={() => fetchAndViewImage(image.id, image.tag || 'Image')}
+                          disabled={loadingImageId === image.id}
+                        >
+                          {loadingImageId === image.id ? 'Loading...' : `View ${image.tag || 'Image'}`}
+                        </button>
+                      ))
+                    ) : 'No images'}
+                  </div>
+                </div>
               </div>
             </div>
             <div className="popup-footer">
@@ -1080,6 +1297,7 @@ const PhysicianQuestionnaire = () => {
           </div>
         </div>
       )}
+      <ImageViewer />
     </div>
   );
 };

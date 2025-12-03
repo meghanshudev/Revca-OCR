@@ -554,3 +554,84 @@
   }
 }
 
+
+.tab-switcher {
+  display: flex;
+  margin-bottom: 1.5rem;
+  border-bottom: 2px solid var(--light-color);
+}
+
+.tab-button {
+  padding: 1rem 1.5rem;
+  cursor: pointer;
+  border: none;
+  background-color: transparent;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--secondary-color);
+  transition: all 0.3s ease;
+  border-bottom: 3px solid transparent;
+  margin-bottom: -2px;
+}
+
+.tab-button.active {
+  color: var(--primary-color);
+  border-bottom: 3px solid var(--primary-color);
+}
+
+.tab-button:hover {
+  background-color: var(--light-color);
+}
+
+.prescription-form-container .patient-details-section {
+  background-color: #f9f9f9;
+  padding: 1.5rem;
+  border-radius: var(--border-radius);
+  margin-top: 1.5rem;
+}
+
+.button-group {
+  display: flex;
+  gap: 10px;
+}
+
+.file-view-button {
+  padding: 0.8rem;
+  background-color: var(--secondary-color);
+  color: white;
+  border: none;
+  border-radius: var(--border-radius);
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 600;
+  transition: var(--transition);
+  flex: 1;
+}
+
+.file-view-button:hover {
+  background-color: var(--primary-color);
+  transform: translateY(-2px);
+}
+
+.file-view-button:disabled {
+  background-color: #ccc;
+  cursor: wait;
+}
+
+.image-gallery {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.image-viewer-container .image-preview {
+  max-width: 100%;
+  max-height: 70vh;
+  border-radius: var(--border-radius);
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
