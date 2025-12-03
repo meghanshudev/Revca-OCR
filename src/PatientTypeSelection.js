@@ -50,6 +50,7 @@ const PatientTypeSelection = ({ onPatientTypeSelect }) => {
       const response = await fetch(`${API_BASE_URL}/api/v1/patient_questionnaire/${patientIdInput}`);
       if (response.ok) {
         const data = await response.json();
+        console.log('Fetched patient data:', data); // Log the data for debugging
         onPatientTypeSelect('existing', data);
       } else {
         alert(t('patientNotFound'));

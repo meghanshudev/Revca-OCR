@@ -37,8 +37,11 @@ function AppContent() {
     setPatientTypeSelected(true);
     if (type === 'new') {
       setGeneratedPatientId(data);
+      setExistingPatientData(null); // Reset existing data when creating a new patient
     } else if (type === 'existing') {
+      setGeneratedPatientId(null); // Reset generated ID when using existing patient
       setExistingPatientData(data);
+      console.log('Setting existing patient data:', data); // Log for debugging
     }
   };
 
