@@ -21,7 +21,7 @@ const PatientTypeSelection = ({ onPatientTypeSelect }) => {
 
       if (response.ok) {
         const data = await response.json();
-        onPatientTypeSelect('new', data.patient_identification_number);
+        onPatientTypeSelect('new', data);
       } else {
         console.error('Failed to generate patient ID');
         // Handle error appropriately, maybe show an alert

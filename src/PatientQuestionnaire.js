@@ -160,10 +160,7 @@ const PatientQuestionnaire = ({ initialPatientId, existingData }) => {
     e.preventDefault();
     setIsLoading(true);
 
-    const images = Object.keys(imageIds).map(site => ({
-      id: imageIds[site],
-      note: imageNotes[site] || ''
-    }));
+    const images = Object.values(imageIds);
     const dataToSend = { ...formData, images };
 
     // Convert empty strings to null, as the backend might expect that for optional fields
@@ -174,8 +171,8 @@ const PatientQuestionnaire = ({ initialPatientId, existingData }) => {
     });
 
     try {
-      const response = await fetch(`${API_BASE_URL}/api/v1/patient_questionnaire/`, {
-        method: 'POST',
+      const response = await fetch(`${API_BASE_URL}/api/v1/patient_questionnaire/${existingData.id}`, {
+        method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
         },

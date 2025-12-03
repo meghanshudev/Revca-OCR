@@ -36,8 +36,8 @@ function AppContent() {
   const handlePatientTypeSelect = (type, data) => {
     setPatientTypeSelected(true);
     if (type === 'new') {
-      setGeneratedPatientId(data);
-      setExistingPatientData(null); // Reset existing data when creating a new patient
+      setGeneratedPatientId(data.patient_identification_number);
+      setExistingPatientData(data); // Pass the full data object even for new patients to get the ID
     } else if (type === 'existing') {
       setGeneratedPatientId(null); // Reset generated ID when using existing patient
       setExistingPatientData(data);
