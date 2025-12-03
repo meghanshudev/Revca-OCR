@@ -35,6 +35,7 @@ const FileUploadPopup = ({ isOpen, onClose, onFileSelect, site }) => {
       setIsUploading(true);
       const formData = new FormData();
       formData.append('file', selectedFile);
+      formData.append('tag', site);
 
       try {
         const response = await fetch(`${API_BASE_URL}/api/v1/image/upload/`, {
