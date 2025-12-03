@@ -112,9 +112,52 @@
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
 }
 
+.image-viewer-container .image-preview {
+  max-height: 400px;
+  object-fit: contain;
+}
+
+.image-note-display {
+  margin-top: 10px;
+  padding: 10px;
+  background-color: #f8f9fa;
+  border-radius: 4px;
+  border-left: 3px solid #3498db;
+  width: 100%;
+}
+
 .file-info {
   text-align: center;
   color: #7f8c8d;
+}
+
+.patient-images-container {
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  padding: 15px;
+  margin-top: 20px;
+}
+
+.image-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: center;
+  margin-top: 10px;
+}
+
+.image-item {
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  padding: 10px;
+  background-color: white;
+  transition: transform 0.2s, box-shadow 0.2s;
+  width: 200px;
+}
+
+.image-item:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
 .file-info p {

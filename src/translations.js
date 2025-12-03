@@ -100,7 +100,12 @@ export const translations = {
     fetchDetails: "Fetch Details",
     fetchingDetails: "Fetching Details...",
     patientNotFound: "Patient not found",
-    back: "Back"
+    back: "Back",
+    imageLoadError: "Failed to load image",
+    patientImages: "Patient Images",
+    oralSite: "Oral Site",
+    viewImage: "View Image",
+    close: "Close"
   },
   hi: {
     title: "रोगी प्रश्नावली",
@@ -203,7 +208,12 @@ export const translations = {
     fetchDetails: "विवरण प्राप्त करें",
     fetchingDetails: "विवरण प्राप्त कर रहा है...",
     patientNotFound: "रोगी नहीं मिला",
-    back: "वापस"
+    back: "वापस",
+    imageLoadError: "छवि लोड करने में विफल",
+    patientImages: "रोगी की तस्वीरें",
+    oralSite: "मौखिक स्थान",
+    viewImage: "छवि देखें",
+    close: "बंद करें"
   },
   mr: {
     title: "रुग्ण प्रश्नावली",
@@ -298,6 +308,19 @@ export const translations = {
     formSubmitted: "फॉर्म यशस्वीरित्या सबमिट केला!",
     formFailed: "फॉर्म सबमिशन अयशस्वी",
     submissionError: "फॉर्म सबमिशन दरम्यान एक त्रुटी आली",
-    ok: "ठीक आहे"
+    ok: "ठीक आहे",
+    newPatient: "नवीन रुग्ण",
+    existingPatient: "विद्यमान रुग्ण",
+    generatingId: "रुग्ण आयडी तयार करत आहे...",
+    enterPatientId: "रुग्ण आयडी प्रविष्ट करा",
+    fetchDetails: "तपशील मिळवा",
+    fetchingDetails: "तपशील मिळवत आहे...",
+    patientNotFound: "रुग्ण सापडला नाही",
+    back: "मागे",
+    imageLoadError: "प्रतिमा लोड करण्यात अयशस्वी",
+    patientImages: "रुग्णाच्या प्रतिमा",
+    oralSite: "तोंडाचे स्थान",
+    viewImage: "प्रतिमा पहा",
+    close: "बंद करा"
   }
 };
