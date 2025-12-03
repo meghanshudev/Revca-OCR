@@ -5,6 +5,41 @@ import { API_BASE_URL } from './config';
 import PhysicianActions from './PhysicianActions';
 import './PhysicianActions.css';
 import Loader from './Loader';
+import FileUploadPopup from './FileUploadPopup';
+
+const comorbiditiesOptions = {
+  "General / Metabolic": [
+    "Obesity", "Malnutrition", "Dyslipidemia", "Diabetes mellitus – Type 1",
+    "Diabetes mellitus – Type 2", "Hypothyroidism", "Hyperthyroidism", "Other General/Metabolic"
+  ],
+  "Cardiovascular": [
+    "Hypertension", "Coronary artery disease", "Congestive heart failure",
+    "Cardiac arrhythmia", "Peripheral vascular disease", "Other Cardiovascular"
+  ],
+  "Cerebrovascular / Neurologic": [
+    "Prior stroke / Transient ischemic attack (TIA)", "Dementia / Cognitive impairment"
+  ],
+  "Respiratory": [
+    "Chronic obstructive pulmonary disease (COPD)", "Asthma", "Other Respiratory"
+  ],
+  "Gastrointestinal / Hepatic / Renal": [
+    "Chronic liver disease / Cirrhosis", "Peptic ulcer disease",
+    "Gastroesophageal reflux disease (GERD)", "Chronic kidney disease", "Other GI/Hepatic/Renal"
+  ],
+  "Immunologic / Autoimmune": [
+    "Immunosuppression", "Autoimmune disease"
+  ],
+  "Hematologic": [
+    "Aneamia or chronic hematologic disorder"
+  ],
+  "Psychiatric": [
+    "Psychiatric illness"
+  ],
+  "Oncologic": [
+    "Prior cancer (other than oral cavity)"
+  ],
+  "None": ["None"]
+};
 
 const PhysicianQuestionnaire = () => {
   const [patients, setPatients] = useState([]);
@@ -24,9 +59,16 @@ const PhysicianQuestionnaire = () => {
     grade: '',
     molecular_genetic_analysis: false,
     unique_identifier: '',
-    images: []
+    images: [],
+    primary_treatment_modality: '',
+    disease_status: '',
+    follow_up_period: ''
   });
   
+  const [activePhotoPopup, setActivePhotoPopup] = useState(null);
+  const [uploadedPhotos, setUploadedPhotos] = useState({});
+  const [imageIds, setImageIds] = useState({});
+
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -93,6 +135,42 @@ const PhysicianQuestionnaire = () => {
       [name]: type === 'checkbox' ? checked : value
     }));
   };
+
+  const handleMultiSelectChange = (e, fieldName, delimiter = ', ') => {
+    const { value, checked } = e.target;
+    setPrescriptionData(prevData => {
+      const currentValues = prevData[fieldName] && prevData[fieldName] !== '' ? prevData[fieldName].split(delimiter) : [];
+      let newValues;
+      if (checked) {
+        newValues = [...currentValues, value];
+      } else {
+        newValues = currentValues.filter(item => item !== value);
+      }
+      return {
+        ...prevData,
+        [fieldName]: newValues.join(delimiter)
+      };
+    });
+  };
+
+  const openPhotoPopup = (site) => {
+    setActivePhotoPopup(site);
+  };
+
+  const closePhotoPopup = () => {
+    setActivePhotoPopup(null);
+  };
+
+  const handlePhotoSelect = (result, file, site) => {
+    setImageIds(prevIds => ({
+      ...prevIds,
+      [site]: result.id
+    }));
+    setUploadedPhotos(prevPhotos => ({
+      ...prevPhotos,
+      [site]: true
+    }));
+  };
   
   const handlePrescriptionSubmit = async (e) => {
     e.preventDefault();
@@ -101,7 +179,9 @@ const PhysicianQuestionnaire = () => {
     // Convert size to number if it's a string
     const dataToSend = {
       ...prescriptionData,
-      size: prescriptionData.size ? Number(prescriptionData.size) : 0
+      size: prescriptionData.size ? Number(prescriptionData.size) : 0,
+      follow_up_period: prescriptionData.follow_up_period ? Number(prescriptionData.follow_up_period) : null,
+      images: Object.values(imageIds)
     };
     
     const token = localStorage.getItem('token');
@@ -131,8 +211,13 @@ const PhysicianQuestionnaire = () => {
           grade: '',
           molecular_genetic_analysis: false,
           unique_identifier: '',
-          images: []
+          images: [],
+          primary_treatment_modality: '',
+          disease_status: '',
+          follow_up_period: ''
         });
+        setUploadedPhotos({});
+        setImageIds({});
       } else {
         const errorData = await response.json();
         console.error('Failed to add prescription:', errorData);
@@ -471,33 +556,75 @@ const PhysicianQuestionnaire = () => {
           
           <form onSubmit={handlePrescriptionSubmit} className="prescription-form">
             <div className="form-group">
-              <label htmlFor="comorbidities">Comorbidities:</label>
-              <textarea 
-                id="comorbidities" 
-                name="comorbidities" 
-                value={prescriptionData.comorbidities} 
-                onChange={handlePrescriptionChange}
-                placeholder="Enter any comorbidities"
-              ></textarea>
+              <label>Comorbidities:</label>
+              {Object.entries(comorbiditiesOptions).map(([category, options]) => (
+                <div key={category} className="comorbidity-category" style={{ marginBottom: '15px' }}>
+                  <strong style={{ display: 'block', marginBottom: '5px', color: '#2c3e50' }}>{category}</strong>
+                  <div className="checkbox-grid">
+                    {options.map(option => (
+                      <label key={option} className="checkbox-label">
+                        <input
+                          type="checkbox"
+                          value={option}
+                          checked={prescriptionData.comorbidities ? prescriptionData.comorbidities.split('|').includes(option) : false}
+                          onChange={(e) => handleMultiSelectChange(e, 'comorbidities', '|')}
+                        />
+                        {option}
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div className="form-group">
+              <label>Photographs (with size measuring function):</label>
+              <div className="multi-input-group">
+                {[1, 2, 3, 4, 5, 6].map(num => {
+                  const site = `Photograph_Site_${num}`;
+                  return (
+                    <div key={site} className="file-input-container">
+                      <label>Site {num}:</label>
+                      <button
+                        type="button"
+                        className="file-upload-button"
+                        onClick={() => openPhotoPopup(site)}
+                      >
+                        {uploadedPhotos[site] ? 'Change Photo' : 'Upload Photo'}
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
             
             <div className="form-group">
-              <label htmlFor="oropharyngeal_lesion_information">Oropharyngeal Lesion Information:</label>
-              <textarea 
-                id="oropharyngeal_lesion_information" 
-                name="oropharyngeal_lesion_information" 
-                value={prescriptionData.oropharyngeal_lesion_information} 
-                onChange={handlePrescriptionChange}
-                placeholder="Enter lesion information"
-              ></textarea>
+              <label>Oropharyngeal Lesion Information:</label>
+              <div className="checkbox-grid">
+                {[
+                  'Anterior floor of mouth', 'Anterior 2/3 of tongue', 'Posterior third tongue',
+                  'Buccal mucosa', 'Hard palate', 'Soft Palate', 'Nasopharynx',
+                  'Hypopharynx', 'Larynx', 'Sinuses', 'Tonsils', 'Other'
+                ].map(site => (
+                  <label key={site} className="checkbox-label">
+                    <input
+                      type="checkbox"
+                      value={site}
+                      checked={prescriptionData.oropharyngeal_lesion_information ? prescriptionData.oropharyngeal_lesion_information.split(', ').includes(site) : false}
+                      onChange={(e) => handleMultiSelectChange(e, 'oropharyngeal_lesion_information')}
+                    />
+                    {site}
+                  </label>
+                ))}
+              </div>
             </div>
             
             <div className="form-group">
               <label htmlFor="laterality">Laterality:</label>
-              <select 
-                id="laterality" 
-                name="laterality" 
-                value={prescriptionData.laterality} 
+              <select
+                id="laterality"
+                name="laterality"
+                value={prescriptionData.laterality}
                 onChange={handlePrescriptionChange}
               >
                 <option value="">-- Select Laterality --</option>
@@ -509,54 +636,56 @@ const PhysicianQuestionnaire = () => {
             </div>
             
             <div className="form-group">
-              <label htmlFor="size">Size (mm):</label>
-              <input 
-                type="number" 
-                id="size" 
-                name="size" 
-                value={prescriptionData.size} 
+              <label htmlFor="size">Size (greatest dimension in mm):</label>
+              <input
+                type="number"
+                id="size"
+                name="size"
+                value={prescriptionData.size}
                 onChange={handlePrescriptionChange}
                 placeholder="Enter size in mm"
               />
             </div>
             
             <div className="form-group">
-              <label htmlFor="clinical_examination_findings">Clinical Examination Findings:</label>
-              <textarea 
-                id="clinical_examination_findings" 
-                name="clinical_examination_findings" 
-                value={prescriptionData.clinical_examination_findings} 
-                onChange={handlePrescriptionChange}
-                placeholder="Enter examination findings"
-              ></textarea>
+              <label>Clinical Examination Findings:</label>
+              <div className="checkbox-grid">
+                {[
+                  'Neck nodes', 'Trismus', 'Ulceration', 'Submucous fibrosis',
+                  'Leukoplakia', 'Erythroplakia', 'Other'
+                ].map(finding => (
+                  <label key={finding} className="checkbox-label">
+                    <input
+                      type="checkbox"
+                      value={finding}
+                      checked={prescriptionData.clinical_examination_findings ? prescriptionData.clinical_examination_findings.split(', ').includes(finding) : false}
+                      onChange={(e) => handleMultiSelectChange(e, 'clinical_examination_findings')}
+                    />
+                    {finding}
+                  </label>
+                ))}
+              </div>
             </div>
             
             <div className="form-group">
-              <label htmlFor="staging">Staging:</label>
-              <select 
-                id="staging" 
-                name="staging" 
-                value={prescriptionData.staging} 
+              <label htmlFor="staging">Staging (TNM):</label>
+              <input
+                type="text"
+                id="staging"
+                name="staging"
+                value={prescriptionData.staging}
                 onChange={handlePrescriptionChange}
-              >
-                <option value="">-- Select Staging --</option>
-                <option value="stage_0">Stage 0</option>
-                <option value="stage_1">Stage I</option>
-                <option value="stage_2">Stage II</option>
-                <option value="stage_3">Stage III</option>
-                <option value="stage_4a">Stage IVA</option>
-                <option value="stage_4b">Stage IVB</option>
-                <option value="stage_4c">Stage IVC</option>
-              </select>
+                placeholder="e.g., T1N0M0"
+              />
             </div>
             
             <div className="form-group">
               <label htmlFor="histological_type">Histological Type:</label>
-              <input 
-                type="text" 
-                id="histological_type" 
-                name="histological_type" 
-                value={prescriptionData.histological_type} 
+              <input
+                type="text"
+                id="histological_type"
+                name="histological_type"
+                value={prescriptionData.histological_type}
                 onChange={handlePrescriptionChange}
                 placeholder="Enter histological type"
               />
@@ -564,26 +693,46 @@ const PhysicianQuestionnaire = () => {
             
             <div className="form-group">
               <label htmlFor="grade">Grade:</label>
-              <select 
-                id="grade" 
-                name="grade" 
-                value={prescriptionData.grade} 
+              <select
+                id="grade"
+                name="grade"
+                value={prescriptionData.grade}
                 onChange={handlePrescriptionChange}
               >
                 <option value="">-- Select Grade --</option>
-                <option value="grade_1">Grade 1 (Well differentiated)</option>
-                <option value="grade_2">Grade 2 (Moderately differentiated)</option>
-                <option value="grade_3">Grade 3 (Poorly differentiated)</option>
-                <option value="grade_4">Grade 4 (Undifferentiated)</option>
+                <option value="well_differentiated">Well differentiated</option>
+                <option value="moderately_differentiated">Moderately differentiated</option>
+                <option value="poorly_differentiated">Poorly differentiated</option>
               </select>
+            </div>
+
+            <div className="form-group">
+              <label>Histopathalogical slides (uploaded from optrascan):</label>
+              <div className="multi-input-group">
+                {[1, 2, 3, 4, 5, 6].map(num => {
+                  const site = `Histopathology_Site_${num}`;
+                  return (
+                    <div key={site} className="file-input-container">
+                      <label>Site {num}:</label>
+                      <button
+                        type="button"
+                        className="file-upload-button"
+                        onClick={() => openPhotoPopup(site)}
+                      >
+                        {uploadedPhotos[site] ? 'Change Slide' : 'Upload Slide'}
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
             
             <div className="form-group checkbox-group">
               <label>
-                <input 
-                  type="checkbox" 
-                  name="molecular_genetic_analysis" 
-                  checked={prescriptionData.molecular_genetic_analysis} 
+                <input
+                  type="checkbox"
+                  name="molecular_genetic_analysis"
+                  checked={prescriptionData.molecular_genetic_analysis}
                   onChange={handlePrescriptionChange}
                 />
                 Molecular Genetic Analysis
@@ -591,14 +740,66 @@ const PhysicianQuestionnaire = () => {
             </div>
             
             <div className="form-group">
-              <label htmlFor="unique_identifier">Unique Identifier:</label>
-              <input 
-                type="text" 
-                id="unique_identifier" 
-                name="unique_identifier" 
-                value={prescriptionData.unique_identifier} 
+              <label htmlFor="unique_identifier">Photograph/biopsy site unique identifier:</label>
+              <input
+                type="text"
+                id="unique_identifier"
+                name="unique_identifier"
+                value={prescriptionData.unique_identifier}
                 onChange={handlePrescriptionChange}
                 placeholder="Enter unique identifier"
+              />
+            </div>
+
+            <h3>Follow up details</h3>
+            
+            <div className="form-group">
+              <label htmlFor="primary_treatment_modality">Primary Treatment Modality:</label>
+              <select
+                id="primary_treatment_modality"
+                name="primary_treatment_modality"
+                value={prescriptionData.primary_treatment_modality}
+                onChange={handlePrescriptionChange}
+              >
+                <option value="">-- Select Treatment --</option>
+                <option value="surgery_alone">Surgery alone</option>
+                <option value="surgery_adjuvant_radiation">Surgery + adjuvant radiation</option>
+                <option value="surgery_adjuvant_chemoradiation">Surgery + adjuvant chemoradiation</option>
+                <option value="definitive_radiation_alone">Definitive radiation alone</option>
+                <option value="definitive_chemoradiation">Definitive chemoradiation</option>
+                <option value="systemic_therapy_alone">Systemic therapy alone (palliative)</option>
+                <option value="observation">Observation / no treatment</option>
+                <option value="other">Other</option>
+              </select>
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="disease_status">Disease Status at follow up:</label>
+              <select
+                id="disease_status"
+                name="disease_status"
+                value={prescriptionData.disease_status}
+                onChange={handlePrescriptionChange}
+              >
+                <option value="">-- Select Status --</option>
+                <option value="alive_ned">Alive with no evidence of disease (NED)</option>
+                <option value="alive_awd">Alive with disease (AWD)</option>
+                <option value="died_dod">Died of disease (DOD)</option>
+                <option value="died_doc">Died of other cause (DOC)</option>
+                <option value="lost_follow_up">Lost to follow-up</option>
+                <option value="hospice">Hospice / palliative care</option>
+              </select>
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="follow_up_period">Time period (months):</label>
+              <input
+                type="number"
+                id="follow_up_period"
+                name="follow_up_period"
+                value={prescriptionData.follow_up_period}
+                onChange={handlePrescriptionChange}
+                placeholder="Enter months"
               />
             </div>
             
@@ -607,6 +808,15 @@ const PhysicianQuestionnaire = () => {
               <button type="button" className="cancel-button" onClick={handleBackToPatientDetails}>Cancel</button>
             </div>
           </form>
+          
+          {activePhotoPopup && (
+            <FileUploadPopup
+              isOpen={!!activePhotoPopup}
+              onClose={closePhotoPopup}
+              onFileSelect={handlePhotoSelect}
+              site={activePhotoPopup}
+            />
+          )}
         </div>
       )}
     </div>
