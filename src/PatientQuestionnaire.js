@@ -295,6 +295,24 @@ const PatientQuestionnaire = ({ initialPatientId, existingData }) => {
     }));
   };
 
+  // Function to fetch the latest patient data by ID
+  const fetchLatestPatientData = async (patientId) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/v1/patient_questionnaire/${patientId}`);
+      
+      if (response.ok) {
+        const data = await response.json();
+        return data;
+      } else {
+        console.error('Failed to fetch latest patient data');
+        return null;
+      }
+    } catch (error) {
+      console.error('Error fetching latest patient data:', error);
+      return null;
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
@@ -321,8 +339,97 @@ const PatientQuestionnaire = ({ initialPatientId, existingData }) => {
       });
 
       if (response.ok) {
+        // Fetch the latest data after successful submission
+        const latestData = await fetchLatestPatientData(existingData.id);
+        
+        if (latestData) {
+          // Update the component with the latest data
+          // This will trigger the useEffect that processes existing images
+          setFormData({
+            patient_identification_number: latestData?.patient_identification_number || initialPatientId || '',
+            email: latestData?.email || '',
+            age: latestData?.age || '',
+            gender: latestData?.gender || '',
+            ethnicity: latestData?.ethnicity || '',
+            ethnicity_other: latestData?.other_ethnicity || '',
+            education_level: latestData?.education_level || '',
+            occupation: latestData?.occupation || '',
+            smartphone_owner: latestData?.smartphone_owner === true ? 'yes' : (latestData?.smartphone_owner === false ? 'no' : ''),
+            cancer_awareness: latestData?.cancer_awareness === true ? 'yes' : (latestData?.cancer_awareness === false ? 'no' : ''),
+            family_history_oral_cancer: latestData?.family_history === true ? 'yes' : (latestData?.family_history === false ? 'no' : ''),
+            smoking_status: latestData?.smoking_status || '',
+            years_of_smoking: latestData?.smoking_years || '',
+            packs_per_day: latestData?.packs_per_day || '',
+            years_since_stopping: latestData?.years_since_stopping || '',
+            alcohol_consumption: latestData?.alcohol_consumption || '',
+            tobacco_chewing_status: latestData?.tobacco_chewing_frequency ? 'daily' : '',
+            tobacco_chewing_times_per_day: latestData?.tobacco_chewing_frequency || '',
+            tobacco_chewing_duration_years: latestData?.tobacco_chewing_duration || '',
+            betel_nut_chewing_status: latestData?.betel_nut_chewing_frequency ? 'daily' : '',
+            betel_nut_chewing_times_per_day: latestData?.betel_nut_chewing_frequency || '',
+            betel_nut_chewing_duration_years: latestData?.betel_nut_chewing_duration || '',
+            gutkha_chewing_status: latestData?.gutkha_chewing_frequency ? 'daily' : '',
+            gutkha_chewing_times_per_day: latestData?.gutkha_chewing_frequency || '',
+            gutkha_chewing_duration_years: latestData?.gutkha_chewing_duration || '',
+            betel_quid_chewing_status: latestData?.betel_quid_chewing_frequency ? 'daily' : '',
+            betel_quid_chewing_times_per_day: latestData?.betel_quid_chewing_frequency || '',
+            betel_quid_chewing_duration_years: latestData?.betel_quid_chewing_duration || '',
+            mishri_use_status: latestData?.mishri_use_frequency ? 'daily' : '',
+            mishri_use_times_per_day: latestData?.mishri_use_frequency || '',
+            mishri_use_duration_years: latestData?.mishri_use_duration || '',
+            symptoms_lumps: latestData?.symptoms_lumps === true ? 'yes' : (latestData?.symptoms_lumps === false ? 'no' : ''),
+            symptoms_soreness: latestData?.symptoms_soreness === true ? 'yes' : (latestData?.symptoms_soreness === false ? 'no' : ''),
+            symptoms_pain_swallowing: latestData?.symptoms_pain_swallowing === true ? 'yes' : (latestData?.symptoms_pain_swallowing === false ? 'no' : ''),
+            symptoms_difficulty_swallowing: latestData?.symptoms_difficulty_swallowing === true ? 'yes' : (latestData?.symptoms_difficulty_swallowing === false ? 'no' : ''),
+            symptoms_difficulty_moving_tongue: latestData?.symptoms_difficulty_tongue === true ? 'yes' : (latestData?.symptoms_difficulty_tongue === false ? 'no' : ''),
+            symptoms_difficulty_opening_jaw: latestData?.symptoms_difficulty_jaw === true ? 'yes' : (latestData?.symptoms_difficulty_jaw === false ? 'no' : ''),
+            symptoms_white_patches: latestData?.symptoms_white_patches === true ? 'yes' : (latestData?.symptoms_white_patches === false ? 'no' : ''),
+            duration_of_symptoms: latestData?.symptoms_duration || '',
+          });
+          
+          // Process images from the latest data
+          if (latestData.images && latestData.images.length > 0) {
+            const imageMap = {};
+            
+            // Group images by their tag (site)
+            latestData.images.forEach(image => {
+              if (image.tag) {
+                imageMap[image.tag] = image;
+              }
+            });
+            
+            setExistingImages(imageMap);
+            
+            // Pre-populate imageIds for existing images
+            const ids = {};
+            latestData.images.forEach(image => {
+              if (image.tag) {
+                ids[image.tag] = image.id;
+              }
+            });
+            setImageIds(ids);
+            
+            // Pre-populate notes for existing images
+            const notes = {};
+            latestData.images.forEach(image => {
+              if (image.tag && image.note) {
+                notes[image.tag] = image.note;
+              }
+            });
+            setImageNotes(notes);
+            
+            // Mark photos as existing
+            const photoStatus = {};
+            latestData.images.forEach(image => {
+              if (image.tag) {
+                photoStatus[image.tag] = true;
+              }
+            });
+            setPhotos(photoStatus);
+          }
+        }
+        
         setDialog({ isOpen: true, message: t('formSubmitted'), isError: false });
-        resetForm();
       } else {
         const errorData = await response.json();
         console.error('Form submission failed:', errorData);
@@ -791,9 +898,16 @@ const PatientQuestionnaire = ({ initialPatientId, existingData }) => {
           <div className="multi-input-group">
             {photoSites.map(site => (
               <div key={site.key} className="file-input-container">
-                <div className="file-input-row">
-                  <label>{site.label}:</label>
-                  <div style={{ display: 'flex', gap: '10px' }}>
+                <div style={{ marginBottom: '15px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+                    <label style={{ margin: 0, fontWeight: 'bold' }}>{site.label}:</label>
+                  </div>
+                  <div style={{ 
+                    display: 'flex', 
+                    flexDirection: 'row', 
+                    gap: '10px',
+                    flexWrap: 'wrap'
+                  }}>
                     {photos[site.key] && imageIds[site.key] && (
                       <button
                         type="button"
@@ -806,7 +920,10 @@ const PatientQuestionnaire = ({ initialPatientId, existingData }) => {
                           border: 'none',
                           padding: '8px 12px',
                           borderRadius: '4px',
-                          cursor: loadingImageId === imageIds[site.key] ? 'wait' : 'pointer'
+                          cursor: loadingImageId === imageIds[site.key] ? 'wait' : 'pointer',
+                          flex: '1',
+                          minWidth: '120px',
+                          maxWidth: '200px'
                         }}
                       >
                         {loadingImageId === imageIds[site.key] ? (
@@ -829,6 +946,11 @@ const PatientQuestionnaire = ({ initialPatientId, existingData }) => {
                       type="button"
                       className="file-upload-button"
                       onClick={() => openPhotoPopup(site.key)}
+                      style={{
+                        flex: '1',
+                        minWidth: '120px',
+                        maxWidth: '200px'
+                      }}
                     >
                       {photos[site.key] ? t('changePhoto') : t('addPhoto')}
                     </button>
