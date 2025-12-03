@@ -59,11 +59,12 @@ const comorbiditiesOptions = {
 
 const PhysicianQuestionnaire = () => {
   const [patients, setPatients] = useState([]);
-  const [searchTerm, setSearchTerm] = useState('');
+  const [patientIdSearch, setPatientIdSearch] = useState('');
   const [showPatientList, setShowPatientList] = useState(true); // Set to true by default
   const [isLoading, setIsLoading] = useState(true); // Start with loading state
   const [selectedPatient, setSelectedPatient] = useState(null);
   const [showPrescriptionForm, setShowPrescriptionForm] = useState(false);
+  const [searchError, setSearchError] = useState('');
   const [prescriptionData, setPrescriptionData] = useState({
     patient_questionnaire_id: 0,
     // Comorbidities fields
@@ -141,12 +142,14 @@ const PhysicianQuestionnaire = () => {
         },
       });
       if (response.ok) {
-        const data = await response.json();
-        setPatients(data);
+        const responseData = await response.json();
+        // Extract the patients array from the data property
+        const patientsArray = responseData.data || [];
+        setPatients(patientsArray);
         setShowPatientList(true);
         
         if (preserveSelected && selectedPatient) {
-          const updatedPatient = data.find(p => p.id === selectedPatient.id);
+          const updatedPatient = patientsArray.find(p => p.id === selectedPatient.id);
           if (updatedPatient) {
             setSelectedPatient(updatedPatient);
           }
@@ -180,6 +183,45 @@ const PhysicianQuestionnaire = () => {
       }
     } catch (error) {
       console.error('Error fetching patient details:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handlePatientIdSearch = async (e) => {
+    e.preventDefault();
+    if (!patientIdSearch.trim()) {
+      setSearchError('Please enter a patient ID');
+      return;
+    }
+
+    setIsLoading(true);
+    setSearchError('');
+    const token = localStorage.getItem('token');
+    
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/v1/patient_questionnaire/${patientIdSearch}`, {
+        headers: {
+          'accept': 'application/json',
+          'Authorization': `Token ${token}`,
+        },
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        setSelectedPatient(data);
+        setShowPatientList(false);
+        setShowPrescriptionForm(false);
+      } else {
+        if (response.status === 404) {
+          setSearchError(`No patient found with ID: ${patientIdSearch}`);
+        } else {
+          setSearchError('Failed to fetch patient details. Please try again.');
+        }
+      }
+    } catch (error) {
+      console.error('Error searching for patient:', error);
+      setSearchError('An error occurred while searching. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -382,40 +424,56 @@ const PhysicianQuestionnaire = () => {
           <h2>All Patients</h2>
           
           <div className="search-bar-container">
-            <input
-              type="text"
-              placeholder="Search patients by email..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="search-input"
-            />
+            <form onSubmit={handlePatientIdSearch} style={{ display: 'flex', gap: '10px' }}>
+              <input
+                type="text"
+                placeholder="Search by patient ID (e.g., PAT-20251202-FF7C)"
+                value={patientIdSearch}
+                onChange={(e) => setPatientIdSearch(e.target.value)}
+                className="search-input"
+                style={{ flex: 1 }}
+              />
+              <button 
+                type="submit" 
+                className="search-button"
+                style={{
+                  padding: '8px 15px',
+                  backgroundColor: '#4CAF50',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '4px',
+                  cursor: 'pointer'
+                }}
+              >
+                Search
+              </button>
+            </form>
+            {searchError && (
+              <div className="error-message" style={{ color: 'red', marginTop: '5px', fontSize: '0.9em' }}>
+                {searchError}
+              </div>
+            )}
           </div>
 
           <div className="patient-profiles">
-            {patients
-              .filter(patient =>
-                patient.email && patient.email.toLowerCase().includes(searchTerm.toLowerCase())
-              )
-              .map(patient => (
+            {patients.map(patient => (
+              <div
+                key={patient.id}
+                className="patient-profile"
+                onClick={() => handlePatientClick(patient)}
+              >
                 <div
-                  key={patient.id}
-                  className="patient-profile"
-                  onClick={() => handlePatientClick(patient)}
+                  className="patient-avatar"
+                  style={{ backgroundColor: getRandomColor(patient.email) }}
                 >
-                  <div
-                    className="patient-avatar"
-                    style={{ backgroundColor: getRandomColor(patient.email) }}
-                  >
-                    {getInitial(patient.email)}
-                  </div>
-                  <div className="patient-email">{patient.email}</div>
+                  {getInitial(patient.email)}
                 </div>
-              ))}
+                <div className="patient-email">{patient.email}</div>
+              </div>
+            ))}
             
-            {patients.filter(patient =>
-              patient.email && patient.email.toLowerCase().includes(searchTerm.toLowerCase())
-            ).length === 0 && (
-              <div className="no-results">No patients found matching "{searchTerm}"</div>
+            {patients.length === 0 && (
+              <div className="no-results">No patients found</div>
             )}
           </div>
         </div>
