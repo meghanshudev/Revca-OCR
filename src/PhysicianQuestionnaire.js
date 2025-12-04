@@ -880,46 +880,56 @@ const PhysicianQuestionnaire = () => {
               <div className="patient-details-section">
                 <h3>Oral Habits</h3>
                 <div className="details-grid">
-                  {selectedPatient.tobacco_chewing_frequency && (
-                    <div className="detail-item">
-                      <span className="detail-label">Tobacco Chewing:</span>
-                      <span className="detail-value">
-                        {`${selectedPatient.tobacco_chewing_frequency} (${selectedPatient.tobacco_chewing_duration || 'duration not specified'})`}
-                      </span>
-                    </div>
-                  )}
-                  {selectedPatient.betel_nut_chewing_frequency && (
-                    <div className="detail-item">
-                      <span className="detail-label">Betel Nut Chewing:</span>
-                      <span className="detail-value">
-                        {`${selectedPatient.betel_nut_chewing_frequency} (${selectedPatient.betel_nut_chewing_duration || 'duration not specified'})`}
-                      </span>
-                    </div>
-                  )}
-                  {selectedPatient.gutkha_chewing_frequency && (
-                    <div className="detail-item">
-                      <span className="detail-label">Gutkha Chewing:</span>
-                      <span className="detail-value">
-                        {`${selectedPatient.gutkha_chewing_frequency} (${selectedPatient.gutkha_chewing_duration || 'duration not specified'})`}
-                      </span>
-                    </div>
-                  )}
-                  {selectedPatient.betel_quid_chewing_frequency && (
-                    <div className="detail-item">
-                      <span className="detail-label">Betel Quid Chewing:</span>
-                      <span className="detail-value">
-                        {`${selectedPatient.betel_quid_chewing_frequency} (${selectedPatient.betel_quid_chewing_duration || 'duration not specified'})`}
-                      </span>
-                    </div>
-                  )}
-                  {selectedPatient.mishri_use_frequency && (
-                    <div className="detail-item">
-                      <span className="detail-label">Mishri Use:</span>
-                      <span className="detail-value">
-                        {`${selectedPatient.mishri_use_frequency} (${selectedPatient.mishri_use_duration || 'duration not specified'})`}
-                      </span>
-                    </div>
-                  )}
+                  {[
+                    { key: 'tobacco_chewing', label: 'Tobacco Chewing' },
+                    { key: 'betel_nut_chewing', label: 'Betel Nut Chewing' },
+                    { key: 'gutkha_chewing', label: 'Gutkha Chewing' },
+                    { key: 'betel_quid_chewing', label: 'Betel Quid Chewing' },
+                    { key: 'mishri_use', label: 'Mishri Use' },
+                  ].map(habit => {
+                    const frequency = selectedPatient[`${habit.key}_frequency`];
+                    const duration = selectedPatient[`${habit.key}_duration`];
+
+                    if (!frequency && !duration) {
+                      return null;
+                    }
+
+                    let displayText;
+                    const durationText = duration ? `for ${duration} years` : '';
+
+                    if (frequency) {
+                      switch (frequency) {
+                        case 'never':
+                          displayText = 'Never';
+                          break;
+                        case 'weekly':
+                          displayText = `Weekly ${durationText}`;
+                          break;
+                        case 'ex_user':
+                          displayText = `Ex-user (used ${durationText})`;
+                          break;
+                        default:
+                          if (!isNaN(frequency) && parseFloat(frequency) > 0) {
+                            displayText = `Daily, ${frequency} times per day ${durationText}`;
+                          } else if (isNaN(frequency) && frequency) {
+                            displayText = `${frequency} ${durationText}`;
+                          }
+                      }
+                    } else if (duration) {
+                      displayText = `Used for ${duration} years`;
+                    }
+
+                    if (!displayText) {
+                      return null;
+                    }
+
+                    return (
+                      <div className="detail-item" key={habit.key}>
+                        <span className="detail-label">{habit.label}:</span>
+                        <span className="detail-value">{displayText.trim()}</span>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
               <div className="patient-details-section">
@@ -1338,9 +1348,6 @@ const PhysicianQuestionnaire = () => {
                   <div className="popup-footer">
                     <button type="submit" className="confirm-button" disabled={isLoading}>
                       {isLoading ? 'Submitting...' : 'Submit'}
-                    </button>
-                    <button type="button" className="cancel-button" onClick={() => setShowFollowupPopup(false)}>
-                      Cancel
                     </button>
                   </div>
                 </form>
