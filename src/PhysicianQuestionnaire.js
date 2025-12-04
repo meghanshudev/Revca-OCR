@@ -720,19 +720,10 @@ const PhysicianQuestionnaire = () => {
                 value={patientIdSearch}
                 onChange={(e) => setPatientIdSearch(e.target.value)}
                 className="search-input"
-                style={{ flex: 1 }}
               />
               <button 
                 type="submit" 
                 className="search-button"
-                style={{
-                  padding: '8px 15px',
-                  backgroundColor: '#4CAF50',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '4px',
-                  cursor: 'pointer'
-                }}
               >
                 Search
               </button>
