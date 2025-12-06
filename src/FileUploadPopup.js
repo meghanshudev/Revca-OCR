@@ -10,6 +10,23 @@ const FileUploadPopup = ({ isOpen, onClose, onFileSelect, site, initialNote = ''
   const fileInputRef = useRef(null);
   const cameraInputRef = useRef(null);
 
+  const siteToImageMap = {
+    "Upper Lip": "upper_lip.png",
+    "Lower Lip": "lower_lip.png",
+    "Left Cheeks (Inside)": "check_inside.png",
+    "Right Cheeks (Inside)": "check_inside.png",
+    "Tongue Top": "tongue.png",
+    "Tongue Back": "back_of_throat.png",
+    "Left Side Tongue": "tongue.png",
+    "Right Side Tongue": "tongue.png",
+    "Roof of Mouth": "roof_of_mouth.png",
+    "Bottom of Mouth": "bottom_of_mouth.png",
+    "Gums": "gums.png",
+    "Back of Throat": "back_of_throat.png"
+  };
+
+  const sampleImage = siteToImageMap[site];
+
   const handleFileChange = (e) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
@@ -90,6 +107,12 @@ const FileUploadPopup = ({ isOpen, onClose, onFileSelect, site, initialNote = ''
                 <div className="option-icon">📷</div>
                 <div className="option-label">Take Photo</div>
               </div>
+              {sampleImage && (
+                <div className="sample-image-container">
+                  <img src={`/images/${sampleImage}`} alt={`Sample for ${site}`} className="sample-image" />
+                  <p className="sample-image-label">Sample Image</p>
+                </div>
+              )}
               <input
                 type="file"
                 accept="image/*"

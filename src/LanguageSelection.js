@@ -11,8 +11,8 @@ const LanguageSelection = ({ onLanguageSelect }) => {
   };
 
   return (
-    <div className="language-selection-container">
-      <h1>Select Language / भाषा निवडा / भाषा चुनें</h1>
+    <div className="language-selection-container">––
+      <h1>Select Language / भाषा चुनें / भाषा निवडा </h1>
       <div className="language-buttons">
         <button onClick={() => handleLanguageSelect('en')} className="language-button">
           English
