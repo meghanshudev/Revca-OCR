@@ -105,10 +105,10 @@ const initialPrescriptionState = {
   clinical_examination_findings: '',
   other_clinical_examination_findings_text: '',
   staging: '',
+  cancerous_lesion: '',
   histological_type: '',
   grade: '',
   molecular_genetic_analysis: false,
-  unique_identifier: '',
   images: [],
   primary_treatment_modality: '',
   disease_status_at_follow_up: '',
@@ -795,7 +795,7 @@ const PhysicianQuestionnaire = () => {
                 >
                   {getInitial(patient.patient_identification_number)}
                 </div>
-                <div className="patient-email">{patient.patient_identification_number}</div>
+                <div className="patient-id">{patient.patient_identification_number}</div>
               </div>
             ))}
             
@@ -818,7 +818,7 @@ const PhysicianQuestionnaire = () => {
             <button className="back-button" onClick={handleBackToList}>
               ← Back to Patient List
             </button>
-            <h2>Patient: {selectedPatient.patient_identification_number || selectedPatient.email}</h2>
+            <h2>Patient: {selectedPatient.patient_identification_number}</h2>
           </div>
 
           <div className="tab-switcher">
@@ -1201,6 +1201,20 @@ const PhysicianQuestionnaire = () => {
             </div>
             
             <div className="form-group">
+              <label htmlFor="cancerous_lesion">Cancerous Lesion:</label>
+              <select
+                id="cancerous_lesion"
+                name="cancerous_lesion"
+                value={prescriptionData.cancerous_lesion}
+                onChange={handlePrescriptionChange}
+              >
+                <option value="">-- Select Type --</option>
+                <option value="benign">Benign</option>
+                <option value="malignant_scc">Malignant (SCC)</option>
+                <option value="malignant_other">Malignant (Other)</option>
+              </select>
+            </div>
+            <div className="form-group">
               <label htmlFor="staging">Staging (TNM):</label>
               <input
                 type="text"
@@ -1282,18 +1296,6 @@ const PhysicianQuestionnaire = () => {
                 />
                 Molecular Genetic Analysis
               </label>
-            </div>
-            
-            <div className="form-group">
-              <label htmlFor="unique_identifier">Photograph/biopsy site unique identifier:</label>
-              <input
-                type="text"
-                id="unique_identifier"
-                name="unique_identifier"
-                value={prescriptionData.unique_identifier}
-                onChange={handlePrescriptionChange}
-                placeholder="Enter unique identifier"
-              />
             </div>
 
             <h3>Follow up details</h3>
@@ -1507,10 +1509,6 @@ const PhysicianQuestionnaire = () => {
                 <div className="detail-item">
                   <span className="detail-label">Molecular Analysis:</span>
                   <span className="detail-value">{selectedFollowUp.molecular_genetic_analysis ? 'Yes' : 'No'}</span>
-                </div>
-                <div className="detail-item">
-                  <span className="detail-label">Unique ID:</span>
-                  <span className="detail-value">{selectedFollowUp.unique_identifier || 'None'}</span>
                 </div>
                 <div className="detail-item">
                   <span className="detail-label">Primary Treatment:</span>

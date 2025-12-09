@@ -12,7 +12,7 @@ const PatientQuestionnaire = ({ initialPatientId, existingData }) => {
   const [dialog, setDialog] = useState({ isOpen: false, message: '', isError: false });
   const [formData, setFormData] = useState({
     patient_identification_number: existingData?.patient_identification_number || initialPatientId || '',
-    email: existingData?.email || '',
+    aadhar_id: existingData?.aadhar_id || '',
     age: existingData?.age || '',
     gender: existingData?.gender || '',
     ethnicity: existingData?.ethnicity || '',
@@ -226,7 +226,7 @@ const PatientQuestionnaire = ({ initialPatientId, existingData }) => {
   const resetForm = () => {
     setFormData({
       patient_identification_number: existingData?.patient_identification_number || initialPatientId || '',
-      email: existingData?.email || '',
+      aadhar_id: existingData?.aadhar_id || '',
       age: existingData?.age || '',
       gender: existingData?.gender || '',
       ethnicity: existingData?.ethnicity || '',
@@ -337,7 +337,7 @@ const PatientQuestionnaire = ({ initialPatientId, existingData }) => {
           // This will trigger the useEffect that processes existing images
           setFormData({
             patient_identification_number: latestData?.patient_identification_number || initialPatientId || '',
-            email: latestData?.email || '',
+            aadhar_id: latestData?.aadhar_id || '',
             age: latestData?.age || '',
             gender: latestData?.gender || '',
             ethnicity: latestData?.ethnicity || '',
@@ -634,8 +634,11 @@ const PatientQuestionnaire = ({ initialPatientId, existingData }) => {
           </div>
         </div>
         <div className="form-group">
-          <label>{t('email')}:</label>
-          <input type="email" name="email" value={formData.email} onChange={handleChange} required />
+          <label>{t('aadharId')}:</label>
+          <input type="text" name="aadhar_id" value={formData.aadhar_id} onChange={handleChange} required />
+          <div style={{ color: '#e74c3c', fontSize: '0.9rem', marginTop: '5px', fontWeight: 'bold' }}>
+            {t('aadharIdNote')}
+          </div>
         </div>
         <div className="form-group">
           <label>{t('age')}:</label>
